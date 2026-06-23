@@ -1,0 +1,1808 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TACLAR Direct V26 - Booking / Disponibilités</title>
+  <style>
+    :root {
+      --ink: #07112b;
+      --muted: #64748b;
+      --line: #dbe4ef;
+      --soft: #f6fafb;
+      --teal: #07858a;
+      --cyan: #06b6d4;
+      --yellow: #ffd400;
+      --green: #16a34a;
+      --orange: #f59e0b;
+      --red: #dc2626;
+      --blue: #2563eb;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: linear-gradient(135deg, #eefcff 0%, #f8fafc 46%, #fff8d8 100%);
+      color: var(--ink);
+    }
+    .wrap { max-width: 1180px; margin: 0 auto; padding: 16px; }
+    .hero {
+      border-radius: 18px;
+      padding: 3px;
+      background: linear-gradient(135deg, var(--cyan), var(--teal), var(--yellow));
+      box-shadow: 0 18px 42px #0f172a24;
+    }
+    .hero-inner {
+      background: rgba(255,255,255,.96);
+      border-radius: 15px;
+      padding: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .brand { display: flex; align-items: center; gap: 14px; }
+    .logo {
+      width: 68px;
+      height: 68px;
+      border-radius: 16px;
+      background: var(--teal);
+      border: 4px solid var(--yellow);
+      color: var(--yellow);
+      display: grid;
+      place-items: center;
+      font-weight: 900;
+      letter-spacing: .04em;
+    }
+    h1, h2, h3 { margin: 0; }
+    h1 { font-size: clamp(26px, 4vw, 40px); }
+    p { color: var(--muted); line-height: 1.45; }
+    .tabs { display: flex; gap: 10px; flex-wrap: wrap; }
+    body.standalone .tabs { display: none !important; }
+    body.standalone .hero-inner { justify-content: flex-start; }
+    body.standalone .panel { display: none !important; }
+    body.standalone .panel.active { display: block !important; }
+    button {
+      border: 0;
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-weight: 900;
+      cursor: pointer;
+      background: var(--teal);
+      color: white;
+      font-size: 14px;
+    }
+    button.secondary { background: #e2e8f0; color: var(--ink); }
+    button.ghost { background: white; color: var(--ink); border: 1px solid var(--line); }
+    button.orange { background: var(--orange); color: #111827; }
+    button.red { background: var(--red); }
+    button.blue { background: var(--blue); }
+    button:disabled { opacity: .45; cursor: not-allowed; }
+    .panel { display: none; margin-top: 16px; }
+    .panel.active { display: block; }
+    .grid { display: grid; gap: 16px; }
+    .two { grid-template-columns: 1fr 380px; }
+    .three { grid-template-columns: repeat(3, 1fr); }
+    .card {
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 12px 30px #0f172a12;
+    }
+    .field-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    label { display: block; font-size: 13px; font-weight: 900; margin: 10px 0 6px; color: #334155; }
+    input, select {
+      width: 100%;
+      border: 1px solid #cbd5e1;
+      border-radius: 12px;
+      padding: 12px;
+      font-size: 15px;
+      background: white;
+    }
+    .route-list { display: grid; gap: 12px; margin-top: 14px; }
+    .offer {
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      padding: 14px;
+      background: #fff;
+      display: grid;
+      gap: 10px;
+    }
+    .offer.selected { border: 3px solid var(--teal); background: #f0fdfa; }
+    .offer-top { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+    .driver-name { font-size: 18px; font-weight: 900; color: var(--ink); }
+    .axis-name { font-size: 14px; font-weight: 900; color: var(--teal); }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 12px;
+      font-weight: 900;
+      background: #e2e8f0;
+      color: #334155;
+      white-space: nowrap;
+    }
+    .badge.ok { background: #dcfce7; color: #166534; }
+    .badge.wait { background: #fef3c7; color: #92400e; }
+    .badge.pay { background: #dbeafe; color: #1d4ed8; }
+    .badge.full { background: #fee2e2; color: #991b1b; }
+    .facts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+    .fact { background: #f8fafc; border-radius: 12px; padding: 10px; border: 1px solid #edf2f7; }
+    .fact small { display: block; color: var(--muted); font-weight: 800; margin-bottom: 4px; }
+    .fact strong { display: block; font-size: 14px; }
+    .summary { position: sticky; top: 10px; }
+    .price-box {
+      background: #f8fafc;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px;
+      margin-top: 12px;
+    }
+    .row { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; border-bottom: 1px solid #e2e8f0; }
+    .row:last-child { border-bottom: 0; }
+    .row strong { text-align: right; }
+    .notice { background: #ecfeff; border: 1px solid #a5f3fc; border-radius: 14px; padding: 12px; margin-top: 12px; }
+    .success { background: #ecfdf5; border-color: #bbf7d0; }
+    .warning { background: #fff7ed; border-color: #fed7aa; }
+    .danger { background: #fef2f2; border-color: #fecaca; }
+    .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+    .request {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px;
+      background: #fff;
+      margin-top: 10px;
+    }
+    .request-head { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
+    .hidden { display: none !important; }
+    .locked-area {
+      opacity: .58;
+      filter: grayscale(.25);
+      pointer-events: none;
+    }
+    .lock-banner {
+      background: #fff7ed;
+      border: 2px solid #fed7aa;
+      color: #9a3412;
+      border-radius: 14px;
+      padding: 12px;
+      margin: 12px 0;
+      font-weight: 800;
+    }
+    .kpi { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 12px; }
+    .kpi div { background: #f8fafc; border: 1px solid #edf2f7; border-radius: 14px; padding: 12px; }
+    .kpi b { display: block; font-size: 21px; color: var(--teal); }
+    .muted { color: var(--muted); }
+    @media (max-width: 900px) {
+      .two, .three, .field-grid, .facts, .kpi { grid-template-columns: 1fr; }
+      .summary { position: static; }
+    }
+  </style>
+</head>
+<body class="standalone" data-start-panel="booking">
+  <div class="wrap">
+    <header class="hero">
+      <div class="hero-inner">
+        <div class="brand">
+          <div class="logo">TACLAR</div>
+          <div>
+            <div class="axis-name">TACLAR Direct Province - V28 Firebase</div>
+            <h1>Mise en relation client-chauffeur</h1>
+            <p>Le chauffeur publie son trajet. Le client demande une place. Le chauffeur confirme. Le client paie les frais TACLAR.</p>
+          </div>
+        </div>
+        <div class="tabs">
+          <button id="driverTab" onclick="showPanel('driver')">Nouveau chauffeur</button>
+          <button id="publishTab" class="secondary" onclick="showPanel('publish')">Publier trajet</button>
+          <button id="bookingTab" class="secondary" onclick="showPanel('booking')">Booking / Disponibilités</button>
+          <button id="clientTab" class="secondary" onclick="showPanel('client')">Client</button>
+        </div>
+      </div>
+    </header>
+
+    <section id="driver" class="panel active">
+      <div class="grid two">
+        <div class="card">
+          <h2>Nouveau chauffeur - rejoindre TACLAR</h2>
+          <p>Le chauffeur envoie d'abord son dossier. La publication de trajet sera disponible seulement après validation des documents et de la caution.</p>
+          <div class="field-grid">
+            <div><label>Nom et prénom chauffeur</label><input id="signupName" placeholder="Ex : Serge Ndong"></div>
+            <div><label>Téléphone chauffeur</label><input id="signupPhone" placeholder="Ex : +241 77 45 90 12"></div>
+            <div><label>Véhicule</label><input id="signupVehicle" placeholder="Ex : Toyota Noah"></div>
+            <div><label>Plaque</label><input id="signupPlate" placeholder="Ex : GA-421-LB"></div>
+            <div><label>Axe souhaité</label><select id="signupAxis" onchange="updateSignupPrice()"></select></div>
+            <div><label>Prix transport / place</label><input id="signupPrice" disabled></div>
+            <div><label>Nombre de places</label><input id="signupSeats" type="number" min="1" step="1" placeholder="Ex : 6" oninput="updateSignupDeposit()"></div>
+            <div><label>Dépôt de garantie calculé</label><input id="signupDeposit" value="0 FCFA" disabled></div>
+          </div>
+          <div class="notice warning">
+            <strong>Étape 1 : dossier chauffeur</strong><br>
+            Les documents sont vérifiés par TACLAR. Ensuite le chauffeur dépose la caution, puis TACLAR active son compte.
+          </div>
+          <div class="field-grid">
+            <div>
+              <label>Permis de conduire</label>
+              <input id="signupLicense" type="file" accept="image/*,.pdf">
+            </div>
+            <div>
+              <label>Pièce d'identité</label>
+              <input id="signupIdCard" type="file" accept="image/*,.pdf">
+            </div>
+            <div>
+              <label>Statut dossier</label>
+              <input id="signupStatus" value="Non envoyé" disabled>
+            </div>
+            <div>
+              <label>Statut caution</label>
+              <input id="signupDepositStatus" value="Non déposée" disabled>
+            </div>
+          </div>
+          <div class="actions">
+            <button id="submitDriverBtn" onclick="submitDriverApplication()">Soumettre le dossier chauffeur</button>
+            <button id="depositDriverBtn" class="orange" onclick="paySignupDeposit()">Déposer la caution</button>
+          </div>
+          <div id="signupNextStep" class="notice"></div>
+        </div>
+
+        <aside class="card">
+          <h2>Validation TACLAR</h2>
+          <p>Simulation interne : TACLAR valide les documents, puis valide la caution. Après cela, le chauffeur peut publier un trajet.</p>
+          <div id="driverApplicationsBoard"></div>
+        </aside>
+      </div>
+    </section>
+
+    <section id="publish" class="panel">
+      <div class="grid two">
+        <div class="card">
+          <h2>Publier un trajet</h2>
+          <p>Cette étape est séparée du dossier chauffeur. Elle sert uniquement à publier une disponibilité réelle : date, heure et embarquement.</p>
+          <div id="publishStatus" class="notice"></div>
+          <div id="publishForm">
+            <div class="field-grid">
+              <div><label>Chauffeur validé</label><select id="publishDriver" onchange="renderPublishPanel()"></select></div>
+              <div><label>Axe</label><input id="publishAxis" disabled></div>
+              <div><label>Véhicule</label><input id="publishVehicle" disabled></div>
+              <div><label>Plaque</label><input id="publishPlate" disabled></div>
+              <div><label>Places disponibles</label><input id="publishSeats" disabled></div>
+              <div><label>Prix transport / place</label><input id="publishPrice" disabled></div>
+              <div><label>Date de départ</label><input id="publishDay" type="date"></div>
+              <div><label>Heure d'enregistrement</label><select id="publishCheckinTime"></select></div>
+              <div><label>Heure de départ</label><select id="publishTime"></select></div>
+              <div><label>Point d'embarquement</label><input id="publishBoarding" placeholder="Ex : Gare routière"></div>
+            </div>
+            <div class="actions">
+              <button onclick="publishOffer()">Publier le trajet</button>
+            </div>
+          </div>
+        </div>
+        <aside class="card">
+          <h2>Règle</h2>
+          <div class="notice success">
+            Un chauffeur peut publier seulement si son dossier est accepté et si sa caution est validée.
+          </div>
+          <div class="price-box">
+            <div class="row"><span>Dossier</span><strong>Documents validés</strong></div>
+            <div class="row"><span>Caution</span><strong>Validée TACLAR</strong></div>
+            <div class="row"><span>Publication</span><strong>Date + heure + embarquement</strong></div>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section id="client" class="panel">
+      <div class="grid two">
+        <div class="card">
+          <h2>Client - chercher un trajet</h2>
+          <p>Au départ, rien ne s'affiche. Le client choisit d'abord un axe, puis les chauffeurs disponibles apparaissent.</p>
+          <div id="clientLockBanner"></div>
+          <div id="clientSearchArea">
+          <div class="field-grid">
+            <div>
+              <label>Axe recherché</label>
+              <select id="clientAxis" onchange="renderClient()"></select>
+            </div>
+            <div>
+              <label>Nom du client</label>
+              <input id="clientName" placeholder="Ex : Arielle Mba" oninput="saveClientDraft()">
+            </div>
+            <div>
+              <label>Téléphone client</label>
+              <input id="clientPhone" placeholder="Ex : +241 66 12 34 56" oninput="saveClientDraft()">
+            </div>
+            <div>
+              <label>Frais de mise en relation TACLAR</label>
+              <input value="2 000 FCFA / place confirmée" disabled>
+            </div>
+            <div>
+              <label>Mode de paiement TACLAR</label>
+              <select id="paymentMode" onchange="renderClient()">
+                <option value="single">Individuel - payer avant autre demande</option>
+                <option value="group">Groupe/famille - payer plusieurs places ensemble</option>
+              </select>
+            </div>
+            <div id="groupLeaderWrap" class="hidden">
+              <label>Responsable du groupe / payeur</label>
+              <input id="groupLeader" placeholder="Ex : nom de l'adulte responsable" oninput="saveClientDraft()">
+            </div>
+            <div id="groupSeatWrap" class="hidden">
+              <label>Nombre de places à réserver</label>
+              <input id="groupSeatCount" type="number" min="2" step="1" value="2" oninput="renderGroupPassengerInputs()">
+            </div>
+            <div id="groupPassengerWrap" class="hidden">
+              <label>Noms des passagers du groupe</label>
+              <div id="groupPassengerInputs"></div>
+            </div>
+          </div>
+          <div id="clientOffers" class="route-list"></div>
+          </div>
+        </div>
+
+        <aside class="card summary">
+          <h2>Suivi client</h2>
+          <div id="clientStatusBox" class="notice">
+            Choisissez un véhicule puis cliquez sur <strong>Demander une place</strong>.
+          </div>
+          <div class="price-box">
+            <div class="row"><span>Frais TACLAR</span><strong>2 000 FCFA / place</strong></div>
+            <div class="row"><span>Transport</span><strong>Payé au chauffeur</strong></div>
+            <div class="row"><span>Infos complètes</span><strong>Après paiement TACLAR</strong></div>
+          </div>
+          <div class="actions">
+            <button class="red" onclick="clientAlert()">Alerte client</button>
+            <button class="ghost" onclick="resetDemo()">Réinitialiser démo</button>
+          </div>
+          <div id="paidReservationsBox" class="price-box"></div>
+        </aside>
+      </div>
+    </section>
+
+    <section id="booking" class="panel">
+      <div class="card">
+        <h2>Booking / Disponibilités chauffeur</h2>
+        <p>Liste compacte des trajets publiés. Les demandes à traiter remontent en haut. Cliquez sur un trajet pour ouvrir les détails.</p>
+        <div class="kpi">
+          <div><b id="kpiOffers">0</b><span>trajets</span></div>
+          <div><b id="kpiPending">0</b><span>demandes</span></div>
+          <div><b id="kpiPaid">0</b><span>payées</span></div>
+          <div><b id="kpiCommission">0</b><span>FCFA TACLAR</span></div>
+        </div>
+        <div id="driverBoard"></div>
+      </div>
+    </section>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <script>
+    const firebaseConfig = window.TACLAR_FIREBASE_CONFIG || {
+      apiKey: "COLLER_VOTRE_API_KEY_FIREBASE_ICI",
+      authDomain: "taclar-52e72.firebaseapp.com",
+      projectId: "taclar-52e72",
+      storageBucket: "taclar-52e72.firebasestorage.app",
+      messagingSenderId: "501812718028",
+      appId: "COLLER_VOTRE_APP_ID_FIREBASE_ICI"
+    };
+
+    const firebaseEnabled = !firebaseConfig.apiKey.includes("COLLER_") && !firebaseConfig.appId.includes("COLLER_");
+    let db = null;
+    let applyingRemoteState = false;
+    let firebaseLoaded = false;
+    let saveTimer = null;
+    let lastSavedState = "";
+
+    if (firebaseEnabled) {
+      firebase.initializeApp(firebaseConfig);
+      db = firebase.firestore();
+    }
+
+    const taclarFee = 2000;
+    let selectedOfferId = null;
+    let activeDriverOfferId = null;
+    let expandedBookingOfferId = null;
+    let clientDraft = { name: "", phone: "", groupLeader: "" };
+    let requestCounter = 1000;
+    let groupReceiptCounter = 7000;
+    let applicationCounter = 300;
+    let activeApplicationId = null;
+    let preferredPublishDriverId = null;
+
+    const axes = [
+      "Libreville → Oyem → Bitam",
+      "Libreville → Lambaréné",
+      "Libreville → Mitzic"
+    ];
+
+    const axisPrices = {
+      "Libreville → Oyem → Bitam": 25000,
+      "Libreville → Lambaréné": 18000,
+      "Libreville → Mitzic": 22000
+    };
+
+    const departureTimes = [
+      "05h00", "05h30", "06h00", "06h30", "07h00", "07h30",
+      "08h00", "08h30", "09h00", "09h30", "10h00", "10h30",
+      "12h00", "14h00", "15h00", "16h00", "18h00"
+    ];
+
+    const initialOffers = [
+      { id: 1, axis: axes[0], driver: "Jérôme Ndong", phone: "+241 77 10 20 31", vehicle: "Toyota Hiace", plate: "GA-142-BT", day: "Lundi", checkinTime: "05h15", time: "06h00", seats: 6, booked: 0, price: 25000, boarding: "PK12 - gare routière", status: "Disponible", requests: [] },
+      { id: 2, axis: axes[0], driver: "Patrick Mba", phone: "+241 66 44 18 90", vehicle: "Toyota Noah", plate: "GA-284-OB", day: "Mardi", checkinTime: "05h15", time: "06h00", seats: 6, booked: 1, price: 25000, boarding: "Charbonnages - station principale", status: "Disponible", requests: [] },
+      { id: 3, axis: axes[0], driver: "Alain Essono", phone: "+241 74 33 29 11", vehicle: "Hyundai H1", plate: "GA-731-BM", day: "Mercredi", checkinTime: "05h15", time: "06h00", seats: 6, booked: 2, price: 25000, boarding: "Gare routière d'Awendjé", status: "Disponible", requests: [] },
+
+      { id: 4, axis: axes[1], driver: "Marcel Nguema", phone: "+241 77 55 80 10", vehicle: "Toyota Yaris", plate: "GA-619-LB", day: "Lundi", checkinTime: "06h15", time: "07h00", seats: 6, booked: 0, price: 18000, boarding: "Gare routière", status: "Disponible", requests: [] },
+      { id: 5, axis: axes[1], driver: "Auguste Obiang", phone: "+241 66 82 14 44", vehicle: "Nissan Serena", plate: "GA-503-LM", day: "Jeudi", checkinTime: "07h45", time: "08h30", seats: 6, booked: 2, price: 18000, boarding: "PK8 - station Total", status: "Disponible", requests: [] },
+      { id: 6, axis: axes[1], driver: "Christian Nzamba", phone: "+241 74 19 63 28", vehicle: "Toyota Noah", plate: "GA-970-LA", day: "Dimanche", checkinTime: "14h15", time: "15h00", seats: 6, booked: 1, price: 18000, boarding: "Nzeng-Ayong - carrefour", status: "Disponible", requests: [] },
+
+      { id: 7, axis: axes[2], driver: "Blaise Bekale", phone: "+241 77 23 45 11", vehicle: "Toyota Hiace", plate: "GA-322-MZ", day: "Mardi", checkinTime: "05h45", time: "06h30", seats: 6, booked: 0, price: 22000, boarding: "PK12 - gare routière", status: "Disponible", requests: [] },
+      { id: 8, axis: axes[2], driver: "Daniel Mengue", phone: "+241 66 78 30 22", vehicle: "Toyota Noah", plate: "GA-808-MT", day: "Vendredi", checkinTime: "06h45", time: "07h30", seats: 6, booked: 1, price: 22000, boarding: "Gare routière d'Awendjé", status: "Disponible", requests: [] },
+      { id: 9, axis: axes[2], driver: "Franck Medza", phone: "+241 74 91 17 67", vehicle: "Hyundai H1", plate: "GA-615-MI", day: "Samedi", checkinTime: "05h00", time: "05h45", seats: 6, booked: 3, price: 22000, boarding: "Charbonnages - rond-point", status: "Disponible", requests: [] }
+    ];
+
+    let offers = JSON.parse(JSON.stringify(initialOffers));
+    let driverApplications = [];
+
+    function formatFCFA(n) {
+      return Number(n || 0).toLocaleString("fr-FR") + " FCFA";
+    }
+
+    function signupDepositAmount() {
+      const seats = Math.max(0, Number(document.getElementById("signupSeats").value || 0));
+      return seats * taclarFee;
+    }
+
+    function updateSignupDeposit() {
+      const seatsInput = document.getElementById("signupSeats");
+      if (Number(seatsInput.value) < 0) seatsInput.value = "";
+      document.getElementById("signupDeposit").value = formatFCFA(signupDepositAmount());
+      document.getElementById("signupDepositStatus").value = "Non déposée";
+    }
+
+    function updateSignupPrice() {
+      const axis = document.getElementById("signupAxis").value;
+      document.getElementById("signupPrice").value = axis ? formatFCFA(axisPrices[axis] || 0) : "";
+    }
+
+    function paySignupDeposit() {
+      const app = driverApplications.find(a => a.id === activeApplicationId);
+      if (!app) {
+        alert("Soumettez d'abord un dossier chauffeur.");
+        return;
+      }
+      if (app.docsStatus !== "Documents validés") {
+        alert("TACLAR doit d'abord valider les documents avant le dépôt de caution.");
+        return;
+      }
+      app.depositPaid = true;
+      app.depositValidated = false;
+      document.getElementById("signupDepositStatus").value = "Déposée - attente validation TACLAR";
+      render();
+      alert("Caution déposée. TACLAR doit maintenant confirmer que la caution est reçue et encaissée.");
+    }
+
+    function freeSeats(offer) {
+      const pendingOrConfirmed = offer.requests.filter(r => r.status !== "Refusée" && !r.paid).length;
+      return Math.max(0, offer.seats - offer.booked - pendingOrConfirmed);
+    }
+
+    function publicPhone(phone) {
+      return phone.slice(0, 7) + " ** ** " + phone.slice(-2);
+    }
+
+    function unpaidConfirmedRequests() {
+      return offers.flatMap(offer =>
+        offer.requests
+          .filter(req => req.status === "Confirmée chauffeur - frais TACLAR à payer" && !req.paid)
+          .map(req => ({ offer, req }))
+      );
+    }
+
+    function clientCanMakeNewRequest() {
+      return document.getElementById("paymentMode").value === "group" || unpaidConfirmedRequests().length === 0;
+    }
+
+    function groupPaymentTotal() {
+      return unpaidConfirmedRequests().length * taclarFee;
+    }
+
+    function paidReservations() {
+      return offers.flatMap(offer =>
+        offer.requests
+          .filter(req => req.paid)
+          .map(req => ({ offer, req }))
+      );
+    }
+
+    function showPanel(id) {
+      if (document.body.dataset.startPanel) id = document.body.dataset.startPanel;
+      document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+      document.getElementById(id).classList.add("active");
+      document.getElementById("clientTab").classList.toggle("secondary", id !== "client");
+      document.getElementById("driverTab").classList.toggle("secondary", id !== "driver");
+      document.getElementById("publishTab").classList.toggle("secondary", id !== "publish");
+      document.getElementById("bookingTab").classList.toggle("secondary", id !== "booking");
+      const hashByPanel = {
+        driver: "nouveau-chauffeur",
+        publish: "publier-trajet",
+        booking: "booking",
+        client: "client"
+      };
+      if (!document.body.dataset.startPanel && hashByPanel[id] && location.hash !== "#" + hashByPanel[id]) {
+        history.replaceState(null, "", "#" + hashByPanel[id]);
+      }
+      render();
+    }
+
+    function panelFromHash() {
+      const fixedPanel = document.body.dataset.startPanel;
+      if (fixedPanel) return fixedPanel;
+      const hash = location.hash.replace("#", "");
+      const panelByHash = {
+        "nouveau-chauffeur": "driver",
+        chauffeur: "driver",
+        "publier-trajet": "publish",
+        publier: "publish",
+        booking: "booking",
+        disponibilites: "booking",
+        client: "client"
+      };
+      return panelByHash[hash] || "driver";
+    }
+
+    function openInitialPanel() {
+      const id = panelFromHash();
+      document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+      document.getElementById(id).classList.add("active");
+      document.getElementById("clientTab").classList.toggle("secondary", id !== "client");
+      document.getElementById("driverTab").classList.toggle("secondary", id !== "driver");
+      document.getElementById("publishTab").classList.toggle("secondary", id !== "publish");
+      document.getElementById("bookingTab").classList.toggle("secondary", id !== "booking");
+    }
+
+    function fillSelects() {
+      const clientAxis = document.getElementById("clientAxis");
+      const signupAxis = document.getElementById("signupAxis");
+      const publishCheckinTime = document.getElementById("publishCheckinTime");
+      const publishTime = document.getElementById("publishTime");
+
+      const currentClientAxis = clientAxis ? clientAxis.value : "";
+      const currentSignupAxis = signupAxis ? signupAxis.value : "";
+      const currentCheckinTime = publishCheckinTime ? publishCheckinTime.value : "";
+      const currentPublishTime = publishTime ? publishTime.value : "";
+
+      clientAxis.innerHTML = `<option value="">-- Choisir un axe --</option>` + axes.map(a => `<option value="${a}">${a}</option>`).join("");
+      signupAxis.innerHTML = `<option value="">-- Choisir un axe --</option>` + axes.map(a => `<option value="${a}">${a}</option>`).join("");
+      publishCheckinTime.innerHTML = `<option value="">-- Heure d'enregistrement --</option>` + departureTimes.map(t => `<option value="${t}">${t}</option>`).join("");
+      publishTime.innerHTML = `<option value="">-- Choisir l'heure --</option>` + departureTimes.map(t => `<option value="${t}">${t}</option>`).join("");
+
+      if (currentClientAxis && axes.includes(currentClientAxis)) clientAxis.value = currentClientAxis;
+      if (currentSignupAxis && axes.includes(currentSignupAxis)) signupAxis.value = currentSignupAxis;
+      if (currentCheckinTime && departureTimes.includes(currentCheckinTime)) publishCheckinTime.value = currentCheckinTime;
+      if (currentPublishTime && departureTimes.includes(currentPublishTime)) publishTime.value = currentPublishTime;
+    }
+
+    function approvedDrivers() {
+      return driverApplications.filter(app => app.active);
+    }
+
+    function activeApplication() {
+      return driverApplications.find(app => app.id === activeApplicationId) || null;
+    }
+
+    function syncSignupWorkflow() {
+      const app = activeApplication();
+      const submitBtn = document.getElementById("submitDriverBtn");
+      const depositBtn = document.getElementById("depositDriverBtn");
+      const next = document.getElementById("signupNextStep");
+      if (!submitBtn || !depositBtn || !next) return;
+
+      if (!app) {
+        submitBtn.disabled = false;
+        depositBtn.disabled = true;
+        next.className = "notice";
+        next.innerHTML = "Remplissez le dossier, ajoutez le permis et la pièce d'identité, puis soumettez à TACLAR.";
+        return;
+      }
+
+      submitBtn.disabled = true;
+      document.getElementById("signupStatus").value = app.depositValidated ? "Dossier accepté" : app.docsStatus;
+      document.getElementById("signupDepositStatus").value = app.depositValidated
+        ? "Caution validée"
+        : app.depositPaid
+          ? "Déposée - attente validation TACLAR"
+          : "Non déposée";
+
+      if (app.active) {
+        depositBtn.disabled = true;
+        next.className = "notice success";
+        next.innerHTML = `
+          <strong>Dossier complet.</strong><br>
+          Le chauffeur peut maintenant publier un trajet.
+          <div class="actions">
+            <button onclick="openPublishForDriver(${app.id})">Publier un trajet maintenant</button>
+          </div>
+        `;
+        return;
+      }
+
+      if (app.depositValidated) {
+        depositBtn.disabled = true;
+        next.className = "notice warning";
+        next.innerHTML = "Caution validée. En attente de l'autorisation TACLAR pour publier un trajet.";
+        return;
+      }
+
+      if (app.docsStatus !== "Documents validés") {
+        depositBtn.disabled = true;
+        next.className = "notice warning";
+        next.innerHTML = "Dossier envoyé à TACLAR. En attente de validation des documents.";
+        return;
+      }
+
+      if (!app.depositPaid) {
+        depositBtn.disabled = false;
+        next.className = "notice success";
+        next.innerHTML = "Documents validés. Le chauffeur doit maintenant déposer la caution.";
+        return;
+      }
+
+      depositBtn.disabled = true;
+      next.className = "notice warning";
+      next.innerHTML = "Caution déposée. En attente de validation TACLAR : caution reçue et encaissée.";
+    }
+
+    function startNewDriverApplication() {
+      activeApplicationId = null;
+      clearSignupForm();
+      render();
+    }
+
+    function openPublishForDriver(appId) {
+      preferredPublishDriverId = appId;
+      const select = document.getElementById("publishDriver");
+      if (select) select.value = String(appId);
+      showPanel("publish");
+    }
+
+    function submitDriverApplication() {
+      if (activeApplication()) {
+        alert("Un dossier chauffeur est déjà en cours. Terminez ce dossier avant d'en créer un autre.");
+        return;
+      }
+      const name = document.getElementById("signupName").value.trim();
+      const phone = document.getElementById("signupPhone").value.trim();
+      const vehicle = document.getElementById("signupVehicle").value.trim();
+      const plate = document.getElementById("signupPlate").value.trim();
+      const axis = document.getElementById("signupAxis").value;
+      const seats = Number(document.getElementById("signupSeats").value || 0);
+      const license = document.getElementById("signupLicense");
+      const idCard = document.getElementById("signupIdCard");
+
+      if (!name || !phone || !vehicle || !plate || !axis) {
+        alert("Remplissez le nom, téléphone, véhicule, plaque et axe souhaité.");
+        return;
+      }
+      if (!Number.isInteger(seats) || seats < 1) {
+        alert("Le nombre de places doit être au minimum 1.");
+        return;
+      }
+      if (!license.files.length || !idCard.files.length) {
+        alert("Ajoutez le permis de conduire et la pièce d'identité.");
+        return;
+      }
+
+      const app = {
+        id: ++applicationCounter,
+        name,
+        phone,
+        vehicle,
+        plate,
+        axis,
+        seats,
+        price: axisPrices[axis] || 0,
+        deposit: seats * taclarFee,
+        docsStatus: "En attente validation TACLAR",
+        depositPaid: false,
+        depositValidated: false,
+        active: false
+      };
+      driverApplications.push(app);
+      activeApplicationId = app.id;
+      document.getElementById("signupStatus").value = app.docsStatus;
+      document.getElementById("signupDepositStatus").value = "Non déposée";
+      render();
+      alert("Dossier envoyé à TACLAR pour vérification.");
+    }
+
+    function validateDriverDocs(appId) {
+      const app = driverApplications.find(a => a.id === appId);
+      app.docsStatus = "Documents validés";
+      activeApplicationId = appId;
+      document.getElementById("signupStatus").value = "Documents validés";
+      render();
+    }
+
+    function validateDriverDeposit(appId) {
+      const app = driverApplications.find(a => a.id === appId);
+      if (!app.depositPaid) {
+        alert("La caution doit d'abord être déposée.");
+        return;
+      }
+      app.depositValidated = true;
+      activeApplicationId = appId;
+      preferredPublishDriverId = appId;
+      document.getElementById("signupStatus").value = "Dossier accepté";
+      document.getElementById("signupDepositStatus").value = "Caution validée";
+      render();
+      alert("Caution validée. TACLAR doit maintenant autoriser la publication du chauffeur.");
+    }
+
+    function authorizeDriverPublication(appId) {
+      const app = driverApplications.find(a => a.id === appId);
+      if (!app.depositValidated) {
+        alert("Validez d'abord la caution reçue.");
+        return;
+      }
+      app.active = true;
+      activeApplicationId = appId;
+      preferredPublishDriverId = appId;
+      render();
+      alert("Publication autorisée. Le chauffeur peut maintenant publier un trajet.");
+    }
+
+    function clearSignupForm() {
+      document.getElementById("signupName").value = "";
+      document.getElementById("signupPhone").value = "";
+      document.getElementById("signupVehicle").value = "";
+      document.getElementById("signupPlate").value = "";
+      document.getElementById("signupAxis").value = "";
+      document.getElementById("signupPrice").value = "";
+      document.getElementById("signupSeats").value = "";
+      document.getElementById("signupDeposit").value = "0 FCFA";
+      document.getElementById("signupLicense").value = "";
+      document.getElementById("signupIdCard").value = "";
+      document.getElementById("signupStatus").value = "Non envoyé";
+      document.getElementById("signupDepositStatus").value = "Non déposée";
+    }
+
+    function saveClientDraft() {
+      clientDraft.name = document.getElementById("clientName").value;
+      clientDraft.phone = document.getElementById("clientPhone").value;
+      const groupLeader = document.getElementById("groupLeader");
+      if (groupLeader) clientDraft.groupLeader = groupLeader.value;
+    }
+
+    function groupSeatCount() {
+      const input = document.getElementById("groupSeatCount");
+      const count = Math.max(2, Number(input ? input.value || 2 : 2));
+      if (input && Number(input.value) < 2) input.value = "2";
+      return count;
+    }
+
+    function groupPassengerNames() {
+      return Array.from(document.querySelectorAll(".group-passenger-name"))
+        .map(input => input.value.trim())
+        .filter(Boolean);
+    }
+
+    function renderGroupPassengerInputs() {
+      const box = document.getElementById("groupPassengerInputs");
+      if (!box) return;
+      const existing = Array.from(document.querySelectorAll(".group-passenger-name")).map(input => input.value);
+      const count = groupSeatCount();
+      box.innerHTML = Array.from({ length: count }, (_, index) => `
+        <input class="group-passenger-name" placeholder="Nom passager ${index + 1}" value="${existing[index] || ""}" style="margin-bottom:8px;">
+      `).join("");
+    }
+
+    function paidSeatCount(offer) {
+      return offer.requests.filter(req => req.paid).length;
+    }
+
+    function chauffeurExpectedAmount(offer) {
+      return paidSeatCount(offer) * offer.price;
+    }
+
+    function rendezvousText(offer) {
+      return `Rendez-vous le ${offer.day} à ${offer.checkinTime || "45 min avant départ"} au point d'embarquement : ${offer.boarding}. Départ prévu : ${offer.time}.`;
+    }
+
+    function renderClient() {
+      saveClientDraft();
+      const axis = document.getElementById("clientAxis").value;
+      const list = document.getElementById("clientOffers");
+      const visible = offers
+        .filter(o => o.axis === axis && o.status === "Disponible")
+        .sort((a, b) => {
+          if (a.id === selectedOfferId) return -1;
+          if (b.id === selectedOfferId) return 1;
+          return a.id - b.id;
+        });
+      const paymentMode = document.getElementById("paymentMode").value;
+      const blockedByUnpaid = !clientCanMakeNewRequest();
+      const lockBanner = document.getElementById("clientLockBanner");
+      const searchArea = document.getElementById("clientSearchArea");
+      const unpaid = unpaidConfirmedRequests();
+      const groupLeaderWrap = document.getElementById("groupLeaderWrap");
+      const groupSeatWrap = document.getElementById("groupSeatWrap");
+      const groupPassengerWrap = document.getElementById("groupPassengerWrap");
+      if (groupLeaderWrap) groupLeaderWrap.classList.toggle("hidden", paymentMode !== "group");
+      if (groupSeatWrap) groupSeatWrap.classList.toggle("hidden", paymentMode !== "group");
+      if (groupPassengerWrap) groupPassengerWrap.classList.toggle("hidden", paymentMode !== "group");
+      if (paymentMode === "group") renderGroupPassengerInputs();
+
+      if (!axis) {
+        list.innerHTML = `<div class="notice">Aucun axe sélectionné. Choisissez un axe pour voir les chauffeurs disponibles.</div>`;
+        return;
+      }
+
+      if (blockedByUnpaid && paymentMode === "single") {
+        const pending = unpaid[0];
+        searchArea.classList.add("locked-area");
+        document.getElementById("clientAxis").disabled = true;
+        document.getElementById("clientName").disabled = true;
+        document.getElementById("clientPhone").disabled = true;
+        document.getElementById("paymentMode").disabled = true;
+        const groupLeader = document.getElementById("groupLeader");
+        if (groupLeader) groupLeader.disabled = true;
+        const groupSeat = document.getElementById("groupSeatCount");
+        if (groupSeat) groupSeat.disabled = true;
+        document.querySelectorAll(".group-passenger-name").forEach(input => input.disabled = true);
+        lockBanner.innerHTML = `
+          <div class="lock-banner">
+            Paiement individuel : la demande de <strong>${pending.req.clientName}</strong> est confirmée par le chauffeur.
+            Payez les frais TACLAR avant de modifier le client ou de faire une nouvelle demande.
+          </div>
+        `;
+      } else {
+        searchArea.classList.remove("locked-area");
+        document.getElementById("clientAxis").disabled = false;
+        document.getElementById("clientName").disabled = false;
+        document.getElementById("clientPhone").disabled = false;
+        document.getElementById("paymentMode").disabled = false;
+        const groupLeader = document.getElementById("groupLeader");
+        if (groupLeader) groupLeader.disabled = false;
+        const groupSeat = document.getElementById("groupSeatCount");
+        if (groupSeat) groupSeat.disabled = false;
+        document.querySelectorAll(".group-passenger-name").forEach(input => input.disabled = false);
+        lockBanner.innerHTML = "";
+      }
+
+      if (!visible.length) {
+        list.innerHTML = `<div class="notice warning">Aucun chauffeur disponible pour cet axe.</div>`;
+        return;
+      }
+
+      list.innerHTML = visible.map(offer => {
+        const free = freeSeats(offer);
+        const selected = selectedOfferId === offer.id ? "selected" : "";
+        const full = free <= 0;
+        const detailsOpen = selectedOfferId === offer.id;
+        return `
+          <div class="offer ${selected}">
+            <div class="offer-top">
+              <div>
+                <div class="driver-name">${offer.driver}</div>
+                <div class="axis-name">${offer.axis}</div>
+              </div>
+              <span class="badge ${full ? "full" : "ok"}">${full ? "Complet" : free + " place(s)"}</span>
+            </div>
+            ${detailsOpen ? `
+              <div class="facts">
+                <div class="fact"><small>Jour</small><strong>${offer.day}</strong></div>
+                <div class="fact"><small>Enregistrement</small><strong>${offer.checkinTime || "45 min avant"}</strong></div>
+                <div class="fact"><small>Départ</small><strong>${offer.time}</strong></div>
+                <div class="fact"><small>Voiture</small><strong>${offer.vehicle}</strong></div>
+                <div class="fact"><small>Prix / place</small><strong>${formatFCFA(offer.price)}</strong></div>
+              </div>
+              <div class="notice">
+                <strong>Avant paiement TACLAR :</strong> téléphone masqué (${publicPhone(offer.phone)}), point d'embarquement général : ${offer.boarding}.
+              </div>
+            ` : `
+              <div class="notice">
+                Cliquez sur <strong>Voir les détails</strong> pour afficher le jour, l'heure, le véhicule, le prix et le point d'embarquement.
+              </div>
+            `}
+            <div class="actions">
+              <button onclick="selectOffer(${offer.id})" class="ghost">${detailsOpen ? "Masquer les détails" : "Voir les détails"}</button>
+              <button onclick="requestSeat(${offer.id})" ${full || blockedByUnpaid ? "disabled" : ""}>${paymentMode === "group" ? "Demander les places" : "Demander une place"}</button>
+            </div>
+            ${blockedByUnpaid && paymentMode === "single" ? `
+              <div class="notice warning">
+                Paiement individuel actif : payez d'abord les frais TACLAR de la place déjà confirmée.
+              </div>
+            ` : ""}
+          </div>
+        `;
+      }).join("");
+
+      if (paymentMode === "group" && unpaid.length > 0) {
+        list.insertAdjacentHTML("afterbegin", `
+          <div class="notice success">
+            <strong>Paiement groupé actif.</strong><br>
+            ${unpaid.length} place(s) confirmée(s) en attente de paiement TACLAR.
+            Total à payer : <strong>${formatFCFA(groupPaymentTotal())}</strong>.
+            <div class="actions">
+              <button class="orange" onclick="payGroupTaclarFees()">Payer le groupe</button>
+            </div>
+          </div>
+        `);
+      }
+    }
+
+    function selectOffer(id) {
+      selectedOfferId = selectedOfferId === id ? null : id;
+      const offer = offers.find(o => o.id === id);
+      document.getElementById("clientStatusBox").className = "notice";
+      if (selectedOfferId) {
+        document.getElementById("clientStatusBox").innerHTML = `
+          <strong>${offer.driver}</strong> sélectionné.<br>
+          ${offer.axis}, ${offer.day} à ${offer.time}. Cliquez sur <strong>Demander une place</strong>.
+        `;
+      } else {
+        document.getElementById("clientStatusBox").innerHTML = `Détails masqués. Choisissez un véhicule pour continuer.`;
+      }
+      renderClient();
+    }
+
+    function requestSeat(offerId) {
+      saveClientDraft();
+      const paymentMode = document.getElementById("paymentMode").value;
+      const modeLabel = paymentMode === "group" ? "paiement groupé/famille" : "paiement individuel";
+      if (!clientCanMakeNewRequest()) {
+        const unpaid = unpaidConfirmedRequests()[0];
+        alert(`Paiement individuel : payez d'abord les frais TACLAR pour ${unpaid.req.clientName}.`);
+        return;
+      }
+      if (!clientDraft.phone.trim()) {
+        alert("Entrez le téléphone du client ou du responsable.");
+        return;
+      }
+      const offer = offers.find(o => o.id === offerId);
+      const requestedSeats = paymentMode === "group" ? groupSeatCount() : 1;
+      if (freeSeats(offer) < requestedSeats) {
+        alert("Ce véhicule est complet.");
+        return;
+      }
+
+      let names = [];
+      let groupLeader = "";
+      if (paymentMode === "group") {
+        groupLeader = clientDraft.groupLeader.trim();
+        names = groupPassengerNames();
+        if (!groupLeader) {
+          alert("Mode groupe : indiquez le responsable du groupe ou la personne qui paie.");
+          return;
+        }
+        if (names.length !== requestedSeats) {
+          alert(`Mode groupe : renseignez exactement ${requestedSeats} nom(s) de passager.`);
+          return;
+        }
+      } else {
+        if (!clientDraft.name.trim()) {
+          alert("Entrez le nom du client.");
+          return;
+        }
+        names = [clientDraft.name.trim()];
+      }
+
+      if (!confirm(`Confirmer la demande de ${requestedSeats} place(s) en mode ${modeLabel} ?`)) return;
+
+      const batchId = paymentMode === "group" ? "GRP-REQ-" + (++requestCounter) : "";
+      names.forEach(name => {
+        const req = {
+          id: "REQ-" + (++requestCounter),
+          clientName: name,
+          clientPhone: clientDraft.phone.trim(),
+          status: "Demande envoyée",
+          paid: false,
+          paymentMode,
+          groupLeader,
+          groupBatchId: batchId,
+          groupReceiptId: "",
+          createdAt: new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })
+        };
+        offer.requests.push(req);
+      });
+      selectedOfferId = offerId;
+      activeDriverOfferId = offerId;
+      expandedBookingOfferId = offerId;
+      document.getElementById("clientStatusBox").className = "notice warning";
+      document.getElementById("clientStatusBox").innerHTML = `
+        <strong>Demande envoyée au chauffeur.</strong><br>
+        ${requestedSeats} place(s) demandée(s). ${offer.driver} doit confirmer que les places sont encore disponibles.
+        Aucun paiement demandé pour l'instant.
+      `;
+      render();
+      showPanel("booking");
+    }
+
+    function confirmRequest(offerId, requestId) {
+      const offer = offers.find(o => o.id === offerId);
+      const req = offer.requests.find(r => r.id === requestId);
+      req.status = "Confirmée chauffeur - frais TACLAR à payer";
+      activeDriverOfferId = offerId;
+      showPanel("client");
+      document.getElementById("clientStatusBox").className = "notice success";
+      if (document.getElementById("paymentMode").value === "group") {
+        document.getElementById("clientStatusBox").innerHTML = `
+          <strong>Place confirmée par ${offer.driver}.</strong><br>
+          Mode groupe actif : ajoutez d'autres personnes ou cliquez sur <strong>Payer le groupe</strong> dans la liste des trajets.
+        `;
+      } else {
+        document.getElementById("clientStatusBox").innerHTML = `
+          <strong>Place confirmée par ${offer.driver}.</strong><br>
+          Payez les frais de mise en relation TACLAR (${formatFCFA(taclarFee)}) pour recevoir les infos complètes.
+          <div class="actions"><button class="orange" onclick="payTaclarFee(${offer.id}, '${req.id}')">Payer les frais TACLAR</button></div>
+        `;
+      }
+      render();
+    }
+
+    function refuseRequest(offerId, requestId) {
+      const offer = offers.find(o => o.id === offerId);
+      const req = offer.requests.find(r => r.id === requestId);
+      req.status = "Refusée";
+      activeDriverOfferId = offerId;
+      document.getElementById("clientStatusBox").className = "notice danger";
+      document.getElementById("clientStatusBox").innerHTML = `
+        <strong>Demande refusée.</strong><br>
+        Le chauffeur n'a plus de place disponible. Choisissez un autre véhicule.
+      `;
+      render();
+    }
+
+    function deleteRequest(offerId, requestId) {
+      const offer = offers.find(o => o.id === offerId);
+      const req = offer ? offer.requests.find(r => r.id === requestId) : null;
+      if (!offer || !req) return;
+      if (req.paid) {
+        alert("Impossible de supprimer une demande déjà payée. Annulez ou traitez-la séparément.");
+        return;
+      }
+      if (!confirm("Supprimer cette demande créée par erreur ?")) return;
+      offer.requests = offer.requests.filter(r => r.id !== requestId);
+      activeDriverOfferId = offerId;
+      document.getElementById("clientStatusBox").className = "notice warning";
+      document.getElementById("clientStatusBox").innerHTML = `
+        <strong>Demande supprimée.</strong><br>
+        Elle ne compte plus dans les places réservées ou en attente.
+      `;
+      render();
+    }
+
+    function payTaclarFee(offerId, requestId) {
+      const offer = offers.find(o => o.id === offerId);
+      const req = offer.requests.find(r => r.id === requestId);
+      if (req.paid) return;
+      req.status = "Commission TACLAR payée";
+      req.paid = true;
+      req.paymentMode = "single";
+      offer.booked += 1;
+      document.getElementById("clientStatusBox").className = "notice success";
+      document.getElementById("clientStatusBox").innerHTML = `
+        <strong>Frais TACLAR payés. Accès au trajet débloqué.</strong><br><br>
+        Chauffeur : <strong>${offer.driver}</strong><br>
+        Téléphone : <strong>${offer.phone}</strong><br>
+        Véhicule : <strong>${offer.vehicle}</strong>, plaque <strong>${offer.plate}</strong><br>
+        Embarquement : <strong>${offer.boarding}</strong><br>
+        Heure d'enregistrement : <strong>${offer.checkinTime || "45 min avant départ"}</strong><br>
+        Heure de départ : <strong>${offer.time}</strong><br>
+        <strong>${rendezvousText(offer)}</strong><br>
+        Transport à payer au chauffeur : <strong>${formatFCFA(offer.price)}</strong>
+      `;
+      if (freeSeats(offer) <= 0) resetClientAfterCompletedVehicle();
+      render();
+    }
+
+    function payGroupTaclarFees() {
+      const unpaid = unpaidConfirmedRequests();
+      if (!unpaid.length) {
+        alert("Aucune place confirmée à payer.");
+        return;
+      }
+
+      const groupReceiptId = "GRP-" + (++groupReceiptCounter);
+      const paidOffers = new Set();
+      unpaid.forEach(({ offer, req }) => {
+        if (!req.paid) {
+          req.status = "Commission TACLAR payée";
+          req.paid = true;
+          req.paymentMode = "group";
+          req.groupReceiptId = groupReceiptId;
+          offer.booked += 1;
+          paidOffers.add(offer);
+        }
+      });
+
+      document.getElementById("clientStatusBox").className = "notice success";
+      document.getElementById("clientStatusBox").innerHTML = `
+        <strong>Paiement groupé TACLAR validé.</strong><br>
+        Reçu groupe : <strong>${groupReceiptId}</strong><br>
+        ${unpaid.length} place(s) payée(s), total : <strong>${formatFCFA(unpaid.length * taclarFee)}</strong>.<br>
+        Les informations complètes sont maintenant débloquées dans <strong>Mes réservations payées</strong>.<br>
+        Les champs client et responsable ont été vidés pour préparer un nouveau groupe.
+      `;
+      clearClientEntryFields();
+      if ([...paidOffers].some(offer => freeSeats(offer) <= 0)) resetClientAfterCompletedVehicle();
+      render();
+    }
+
+    function clearClientEntryFields() {
+      clientDraft = { name: "", phone: "", groupLeader: "" };
+      const clientName = document.getElementById("clientName");
+      const clientPhone = document.getElementById("clientPhone");
+      const groupLeader = document.getElementById("groupLeader");
+      if (clientName) clientName.value = "";
+      if (clientPhone) clientPhone.value = "";
+      if (groupLeader) groupLeader.value = "";
+      document.querySelectorAll(".group-passenger-name").forEach(input => input.value = "");
+    }
+
+    function resetClientAfterCompletedVehicle() {
+      clearClientEntryFields();
+      selectedOfferId = null;
+      const clientAxis = document.getElementById("clientAxis");
+      if (clientAxis) clientAxis.value = "";
+      document.getElementById("clientStatusBox").className = "notice";
+      document.getElementById("clientStatusBox").innerHTML = `
+        Véhicule complet. L'interface client est remise à zéro pour une nouvelle demande.
+      `;
+    }
+
+    function cancelOffer(offerId) {
+      const offer = offers.find(o => o.id === offerId);
+      if (!confirm("Annuler ce trajet ? Il ne sera plus visible côté client.")) return;
+      offer.status = "Annulé";
+      render();
+    }
+
+    function renderDriverApplications() {
+      const board = document.getElementById("driverApplicationsBoard");
+      if (!board) return;
+      if (!driverApplications.length) {
+        board.innerHTML = `<div class="notice">Aucun dossier chauffeur reçu pour le moment.</div>`;
+        return;
+      }
+
+      board.innerHTML = driverApplications.slice().reverse().map(app => {
+        const depositLabel = app.depositValidated
+          ? "Caution validée"
+          : app.depositPaid
+            ? "Caution déposée"
+            : "Caution non déposée";
+        const statusClass = app.active ? "ok" : app.depositValidated ? "pay" : app.docsStatus === "Documents validés" ? "pay" : "wait";
+        const statusLabel = app.active
+          ? "Publication autorisée"
+          : app.depositValidated
+            ? "Caution validée"
+            : app.docsStatus;
+        return `
+          <div class="request">
+            <div class="request-head">
+              <div>
+                <strong>${app.name}</strong><br>
+                <span class="muted">${app.axis} · ${app.vehicle} · ${app.plate}</span>
+              </div>
+              <span class="badge ${statusClass}">${statusLabel}</span>
+            </div>
+            <div class="price-box">
+              <div class="row"><span>Téléphone</span><strong>${app.phone}</strong></div>
+              <div class="row"><span>Places</span><strong>${app.seats}</strong></div>
+              <div class="row"><span>Prix axe</span><strong>${formatFCFA(app.price)}</strong></div>
+              <div class="row"><span>Dépôt garantie</span><strong>${formatFCFA(app.deposit)}</strong></div>
+              <div class="row"><span>Statut dépôt</span><strong>${depositLabel}</strong></div>
+            </div>
+            <div class="actions">
+              <button onclick="validateDriverDocs(${app.id})" ${app.docsStatus === "Documents validés" ? "disabled" : ""}>Valider documents</button>
+              <button onclick="validateDriverDeposit(${app.id})" ${!app.depositPaid || app.depositValidated ? "disabled" : ""}>Valider caution reçue</button>
+              <button class="blue" onclick="authorizeDriverPublication(${app.id})" ${!app.depositValidated || app.active ? "disabled" : ""}>Autoriser publication</button>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function renderPublishPanel() {
+      const status = document.getElementById("publishStatus");
+      const form = document.getElementById("publishForm");
+      const select = document.getElementById("publishDriver");
+      if (!status || !form || !select) return;
+
+      const drivers = approvedDrivers();
+      if (!drivers.length) {
+        status.className = "notice warning";
+        status.innerHTML = "Aucun chauffeur actif. Validez d'abord un dossier et une caution dans <strong>Nouveau chauffeur</strong>.";
+        form.classList.add("locked-area");
+        select.innerHTML = `<option value="">-- Aucun chauffeur actif --</option>`;
+        return;
+      }
+
+      form.classList.remove("locked-area");
+      const current = select.value || (preferredPublishDriverId ? String(preferredPublishDriverId) : "");
+      select.innerHTML = drivers.map(app => `<option value="${app.id}">${app.name}</option>`).join("");
+      if (current && drivers.some(app => String(app.id) === current)) select.value = current;
+
+      const app = drivers.find(a => String(a.id) === select.value) || drivers[0];
+      preferredPublishDriverId = app.id;
+      select.value = app.id;
+      status.className = "notice success";
+      status.innerHTML = `Chauffeur actif : <strong>${app.name}</strong>. Complétez la date, l'heure et le point d'embarquement.`;
+      document.getElementById("publishAxis").value = app.axis;
+      document.getElementById("publishVehicle").value = app.vehicle;
+      document.getElementById("publishPlate").value = app.plate;
+      document.getElementById("publishSeats").value = `${app.seats} place(s)`;
+      document.getElementById("publishPrice").value = formatFCFA(app.price);
+    }
+
+    function publishOffer() {
+      const driverId = Number(document.getElementById("publishDriver").value);
+      const app = driverApplications.find(a => a.id === driverId && a.active);
+      const day = document.getElementById("publishDay").value;
+      const checkinTime = document.getElementById("publishCheckinTime").value;
+      const time = document.getElementById("publishTime").value;
+      const boarding = document.getElementById("publishBoarding").value.trim();
+
+      if (!app) {
+        alert("Choisissez un chauffeur validé.");
+        return;
+      }
+      if (!day || !checkinTime || !time || !boarding) {
+        alert("Indiquez la date, l'heure d'enregistrement, l'heure de départ et le point d'embarquement.");
+        return;
+      }
+
+      const newOffer = {
+        id: Math.max(...offers.map(o => o.id)) + 1,
+        axis: app.axis,
+        driver: app.name,
+        phone: app.phone,
+        vehicle: app.vehicle,
+        plate: app.plate,
+        day,
+        checkinTime,
+        time,
+        seats: app.seats,
+        booked: 0,
+        price: app.price,
+        boarding,
+        deposit: app.deposit,
+        verified: true,
+        status: "Disponible",
+        requests: []
+      };
+      offers.push(newOffer);
+      document.getElementById("clientAxis").value = "";
+      selectedOfferId = null;
+      activeDriverOfferId = null;
+      expandedBookingOfferId = newOffer.id;
+      document.getElementById("publishDay").value = "";
+      document.getElementById("publishCheckinTime").value = "";
+      document.getElementById("publishTime").value = "";
+      document.getElementById("publishBoarding").value = "";
+      render();
+      alert("Trajet publié. Il est visible côté client.");
+      showPanel("booking");
+    }
+
+    function renderDriver() {
+      const board = document.getElementById("driverBoard");
+      const pending = offers.flatMap(o => o.requests.filter(r => r.status === "Demande envoyée"));
+      const paid = offers.flatMap(o => o.requests.filter(r => r.paid));
+      document.getElementById("kpiOffers").textContent = offers.filter(o => o.status === "Disponible").length;
+      document.getElementById("kpiPending").textContent = pending.length;
+      document.getElementById("kpiPaid").textContent = paid.length;
+      document.getElementById("kpiCommission").textContent = formatFCFA(paid.length * taclarFee).replace(" FCFA", "");
+
+      const orderedOffers = [...offers].sort((a, b) => {
+        if (a.id === activeDriverOfferId) return -1;
+        if (b.id === activeDriverOfferId) return 1;
+        const aPending = a.requests.some(r => r.status === "Demande envoyée");
+        const bPending = b.requests.some(r => r.status === "Demande envoyée");
+        if (aPending !== bPending) return aPending ? -1 : 1;
+        const aToPay = a.requests.some(r => r.status.includes("payer") && !r.paid);
+        const bToPay = b.requests.some(r => r.status.includes("payer") && !r.paid);
+        if (aToPay !== bToPay) return aToPay ? -1 : 1;
+        return a.id - b.id;
+      });
+
+      board.innerHTML = orderedOffers.map(offer => {
+        const reqs = offer.requests;
+        const free = freeSeats(offer);
+        const isOpen = expandedBookingOfferId === offer.id;
+        const statusLabel = free <= 0 ? "Complet" : offer.id === activeDriverOfferId ? "À traiter" : offer.status;
+        const statusClass = free <= 0 || offer.status === "Annulé" ? "full" : offer.id === activeDriverOfferId ? "wait" : "ok";
+        return `
+          <div class="offer ${offer.id === activeDriverOfferId ? "selected" : ""}">
+            <div class="offer-top">
+              <div>
+                <div class="driver-name">${offer.driver}</div>
+                <div class="axis-name">${offer.axis}</div>
+              </div>
+              <span class="badge ${statusClass}" onclick="toggleBookingDetails(${offer.id})">${statusLabel} · ${free} place(s) libres</span>
+            </div>
+            <div class="actions">
+              <button class="ghost" onclick="toggleBookingDetails(${offer.id})">${isOpen ? "Fermer détails" : "Voir détails"}</button>
+              <button class="red" onclick="cancelOffer(${offer.id})" ${offer.status === "Annulé" ? "disabled" : ""}>Annuler</button>
+            </div>
+            ${isOpen ? `
+              <div class="facts">
+                <div class="fact"><small>Jour</small><strong>${offer.day}</strong></div>
+                <div class="fact"><small>Enregistrement</small><strong>${offer.checkinTime || "45 min avant"}</strong></div>
+                <div class="fact"><small>Départ</small><strong>${offer.time}</strong></div>
+                <div class="fact"><small>Véhicule</small><strong>${offer.vehicle}</strong></div>
+                <div class="fact"><small>Plaque</small><strong>${offer.plate}</strong></div>
+                <div class="fact"><small>Prix / place</small><strong>${formatFCFA(offer.price)}</strong></div>
+                <div class="fact"><small>Passagers confirmés</small><strong>${paidSeatCount(offer)}</strong></div>
+                <div class="fact"><small>Recette chauffeur prévue</small><strong>${formatFCFA(chauffeurExpectedAmount(offer))}</strong></div>
+                <div class="fact"><small>Embarquement</small><strong>${offer.boarding}</strong></div>
+                <div class="fact"><small>Fiabilité</small><strong>${offer.verified ? "Documents + caution OK" : "Ancien trajet"}</strong></div>
+                <div class="fact"><small>Caution versée à TACLAR</small><strong>${offer.deposit ? formatFCFA(offer.deposit) : "-"}</strong></div>
+              </div>
+              ${reqs.length ? reqs.map(req => `
+                <div class="request">
+                  <div class="request-head">
+                    <div>
+                      <strong>${req.clientName}</strong><br>
+                      <span class="muted">${req.paid ? req.clientPhone : "Téléphone masqué avant paiement TACLAR"} · ${req.id} · ${req.createdAt}</span>
+                    </div>
+                    <span class="badge ${req.paid ? "ok" : req.status.includes("payer") ? "pay" : req.status === "Refusée" ? "full" : "wait"}">${req.status}</span>
+                  </div>
+                  ${req.paid ? `
+                    <div class="notice success">
+                      Commission TACLAR payée. ${rendezvousText(offer)}
+                    </div>
+                  ` : ""}
+                  <div class="actions">
+                    <button onclick="confirmRequest(${offer.id}, '${req.id}')" ${req.status !== "Demande envoyée" ? "disabled" : ""}>Confirmer place</button>
+                    <button class="ghost" onclick="refuseRequest(${offer.id}, '${req.id}')" ${req.status !== "Demande envoyée" ? "disabled" : ""}>Refuser place</button>
+                    <button class="red" onclick="deleteRequest(${offer.id}, '${req.id}')" ${req.paid ? "disabled" : ""}>Supprimer erreur</button>
+                  </div>
+                </div>
+              `).join("") : `<div class="notice">Aucune demande pour ce trajet.</div>`}
+            ` : ""}
+          </div>
+        `;
+      }).join("");
+    }
+
+    function toggleBookingDetails(offerId) {
+      expandedBookingOfferId = expandedBookingOfferId === offerId ? null : offerId;
+      renderDriver();
+    }
+
+    function clientAlert() {
+      document.getElementById("clientStatusBox").className = "notice danger";
+      document.getElementById("clientStatusBox").innerHTML = `
+        <strong>Alerte envoyée à TACLAR.</strong><br>
+        Motifs possibles : chauffeur absent, numéro incorrect, demande de paiement anormale, annulation tardive.
+      `;
+    }
+
+    function resetDemo() {
+      offers = JSON.parse(JSON.stringify(initialOffers));
+      selectedOfferId = null;
+      activeDriverOfferId = null;
+      expandedBookingOfferId = null;
+      requestCounter = 1000;
+      groupReceiptCounter = 7000;
+      document.getElementById("clientAxis").value = "";
+      document.getElementById("clientStatusBox").className = "notice";
+      document.getElementById("clientStatusBox").innerHTML = `Choisissez un véhicule puis cliquez sur <strong>Demander une place</strong>.`;
+      render();
+    }
+
+    function exportState() {
+      return {
+        offers,
+        driverApplications,
+        selectedOfferId,
+        activeDriverOfferId,
+        expandedBookingOfferId,
+        requestCounter,
+        groupReceiptCounter,
+        applicationCounter,
+        activeApplicationId,
+        preferredPublishDriverId,
+        updatedAt: Date.now()
+      };
+    }
+
+    function applyState(data) {
+      offers = Array.isArray(data.offers) ? data.offers : JSON.parse(JSON.stringify(initialOffers));
+      driverApplications = Array.isArray(data.driverApplications) ? data.driverApplications : [];
+      selectedOfferId = data.selectedOfferId || null;
+      activeDriverOfferId = data.activeDriverOfferId || null;
+      expandedBookingOfferId = data.expandedBookingOfferId || null;
+      requestCounter = Number(data.requestCounter || 1000);
+      groupReceiptCounter = Number(data.groupReceiptCounter || 7000);
+      applicationCounter = Number(data.applicationCounter || 300);
+      activeApplicationId = data.activeApplicationId || null;
+      preferredPublishDriverId = data.preferredPublishDriverId || null;
+    }
+
+    function persistState() {
+      if (!firebaseEnabled || !firebaseLoaded || applyingRemoteState || !db) return;
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(() => {
+        const state = exportState();
+        const serialized = JSON.stringify(state);
+        if (serialized === lastSavedState) return;
+        lastSavedState = serialized;
+        db.collection("taclar_interurbain").doc("production_demo").set(state, { merge: true })
+          .catch(err => alert("Erreur Firebase : " + err.message));
+      }, 250);
+    }
+
+    function startFirebaseSync() {
+      if (!firebaseEnabled || !db) return;
+      db.collection("taclar_interurbain").doc("production_demo").onSnapshot(snapshot => {
+        applyingRemoteState = true;
+        if (snapshot.exists) {
+          applyState(snapshot.data() || {});
+          lastSavedState = JSON.stringify(exportState());
+        } else {
+          firebaseLoaded = true;
+          applyingRemoteState = false;
+          persistState();
+          return;
+        }
+        firebaseLoaded = true;
+        applyingRemoteState = false;
+        fillSelects();
+        openInitialPanel();
+        render();
+      }, err => alert("Connexion Firebase impossible : " + err.message));
+    }
+
+    function render() {
+      renderDriverApplications();
+      renderPublishPanel();
+      syncSignupWorkflow();
+      renderClient();
+      renderDriver();
+      renderPaidReservations();
+      persistState();
+    }
+
+    function renderPaidReservations() {
+      const box = document.getElementById("paidReservationsBox");
+      if (!box) return;
+      const paid = paidReservations();
+
+      if (!paid.length) {
+        box.innerHTML = `
+          <h3>Mes réservations payées</h3>
+          <p class="muted">Les informations complètes du chauffeur apparaissent ici après paiement des frais TACLAR.</p>
+        `;
+        return;
+      }
+
+      const individualPaid = paid.filter(({ req }) => req.paymentMode !== "group" || !req.groupReceiptId);
+      const groupedPaid = paid
+        .filter(({ req }) => req.paymentMode === "group" && req.groupReceiptId)
+        .reduce((acc, item) => {
+          const key = item.req.groupReceiptId;
+          if (!acc[key]) acc[key] = [];
+          acc[key].push(item);
+          return acc;
+        }, {});
+
+      box.innerHTML = `
+        <h3>Mes réservations payées</h3>
+        ${Object.entries(groupedPaid).map(([groupId, items]) => {
+          const first = items[0];
+          const sameOffer = items.every(item => item.offer.id === first.offer.id);
+          return `
+          <div class="request">
+            <strong>Reçu groupe ${groupId}</strong><br>
+            <span class="muted">${items.length} place(s) payée(s) en une fois</span>
+            <div class="row"><span>Responsable</span><strong>${first.req.groupLeader || first.req.clientName}</strong></div>
+            <div class="row"><span>Axe</span><strong>${sameOffer ? first.offer.axis : "Plusieurs trajets"}</strong></div>
+            <div class="row"><span>Chauffeur</span><strong>${sameOffer ? first.offer.driver : "Plusieurs chauffeurs"}</strong></div>
+            <div class="row"><span>Téléphone chauffeur</span><strong>${sameOffer ? first.offer.phone : "Voir reçu détaillé"}</strong></div>
+            <div class="row"><span>Enregistrement</span><strong>${sameOffer ? first.offer.checkinTime || "45 min avant départ" : "Voir reçu détaillé"}</strong></div>
+            <div class="row"><span>Départ</span><strong>${sameOffer ? first.offer.time : "Voir reçu détaillé"}</strong></div>
+            <div class="row"><span>Total frais TACLAR</span><strong>${formatFCFA(items.length * taclarFee)}</strong></div>
+            <div class="actions">
+              <button class="blue" onclick="printGroupReceipt('${groupId}')">Télécharger / imprimer le reçu groupe</button>
+            </div>
+          </div>
+          `;
+        }).join("")}
+        ${individualPaid.map(({ offer, req }) => `
+          <div class="request">
+            <strong>${req.clientName}</strong><br>
+            <span class="muted">${offer.axis} · ${offer.day} · enregistrement ${offer.checkinTime || "45 min avant"} · départ ${offer.time}</span>
+            <div class="row"><span>Chauffeur</span><strong>${offer.driver}</strong></div>
+            <div class="row"><span>Téléphone chauffeur</span><strong>${offer.phone}</strong></div>
+            <div class="row"><span>Véhicule</span><strong>${offer.vehicle}</strong></div>
+            <div class="row"><span>Plaque</span><strong>${offer.plate}</strong></div>
+            <div class="row"><span>Embarquement</span><strong>${offer.boarding}</strong></div>
+            <div class="row"><span>Consigne</span><strong>${rendezvousText(offer)}</strong></div>
+            <div class="row"><span>Transport à payer au chauffeur</span><strong>${formatFCFA(offer.price)}</strong></div>
+            <div class="actions">
+              <button class="blue" onclick="printReceipt(${offer.id}, '${req.id}')">Télécharger / imprimer le reçu</button>
+            </div>
+          </div>
+        `).join("")}
+      `;
+    }
+
+    function printReceipt(offerId, requestId) {
+      const offer = offers.find(o => o.id === offerId);
+      const req = offer.requests.find(r => r.id === requestId);
+      if (!offer || !req || !req.paid) {
+        alert("Le reçu est disponible seulement après paiement des frais TACLAR.");
+        return;
+      }
+
+      const receiptNumber = "TAC-" + requestId.replace("REQ-", "");
+      const today = new Date().toLocaleDateString("fr-FR");
+      const receiptHtml = `
+        <!doctype html>
+        <html lang="fr">
+        <head>
+          <meta charset="utf-8">
+          <title>Reçu ${receiptNumber}</title>
+          <style>
+            * { box-sizing: border-box; }
+            body { font-family: Arial, Helvetica, sans-serif; color: #07112b; margin: 0; padding: 24px; background: #f8fafc; }
+            .receipt { max-width: 760px; margin: 0 auto; background: white; border: 1px solid #dbe4ef; border-radius: 18px; padding: 24px; }
+            .head { display: flex; justify-content: space-between; gap: 16px; border-bottom: 4px solid #07858a; padding-bottom: 16px; margin-bottom: 18px; }
+            .brand { font-size: 34px; font-weight: 900; color: #07858a; }
+            .tag { color: #64748b; font-weight: 700; margin-top: 4px; }
+            .badge { display: inline-block; background: #dcfce7; color: #166534; border-radius: 999px; padding: 7px 12px; font-weight: 900; }
+            h1 { font-size: 24px; margin: 0 0 8px; }
+            h2 { font-size: 17px; margin: 18px 0 8px; color: #07858a; }
+            .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+            .box { border: 1px solid #e2e8f0; border-radius: 14px; padding: 12px; background: #f8fafc; }
+            .row { display: flex; justify-content: space-between; gap: 12px; border-bottom: 1px solid #e2e8f0; padding: 9px 0; }
+            .row:last-child { border-bottom: 0; }
+            .row span { color: #64748b; }
+            .row strong { text-align: right; }
+            .total { background: #07858a; color: white; border-radius: 14px; padding: 14px; font-size: 20px; font-weight: 900; text-align: right; margin-top: 14px; }
+            .note { background: #fff7ed; border: 1px solid #fed7aa; border-radius: 14px; padding: 12px; color: #9a3412; margin-top: 16px; }
+            .actions { margin-top: 18px; display: flex; gap: 10px; }
+            button { border: 0; border-radius: 12px; padding: 12px 14px; font-weight: 900; background: #07858a; color: white; cursor: pointer; }
+            @media print {
+              body { background: white; padding: 0; }
+              .receipt { border: 0; border-radius: 0; max-width: none; }
+              .actions { display: none; }
+            }
+            @media(max-width: 700px) { .grid, .head { grid-template-columns: 1fr; display: block; } .head > div:last-child { margin-top: 12px; } }
+          </style>
+        </head>
+        <body>
+          <div class="receipt">
+            <div class="head">
+              <div>
+                <div class="brand">TACLAR</div>
+                <div class="tag">Reçu de frais de mise en relation</div>
+              </div>
+              <div>
+                <h1>Reçu ${receiptNumber}</h1>
+                <div>Date : <strong>${today}</strong></div>
+                <div style="margin-top:8px"><span class="badge">Payé</span></div>
+              </div>
+            </div>
+
+            <div class="grid">
+              <div class="box">
+                <h2>Client</h2>
+                <div class="row"><span>Nom</span><strong>${req.clientName}</strong></div>
+                <div class="row"><span>Téléphone</span><strong>${req.clientPhone}</strong></div>
+                <div class="row"><span>Code demande</span><strong>${req.id}</strong></div>
+              </div>
+              <div class="box">
+                <h2>Chauffeur</h2>
+                <div class="row"><span>Nom</span><strong>${offer.driver}</strong></div>
+                <div class="row"><span>Téléphone</span><strong>${offer.phone}</strong></div>
+                <div class="row"><span>Véhicule</span><strong>${offer.vehicle}</strong></div>
+                <div class="row"><span>Plaque</span><strong>${offer.plate}</strong></div>
+              </div>
+            </div>
+
+            <h2>Détails du trajet</h2>
+            <div class="box">
+              <div class="row"><span>Axe</span><strong>${offer.axis}</strong></div>
+              <div class="row"><span>Date</span><strong>${offer.day}</strong></div>
+              <div class="row"><span>Heure d'enregistrement</span><strong>${offer.checkinTime || "45 min avant départ"}</strong></div>
+              <div class="row"><span>Heure de départ</span><strong>${offer.time}</strong></div>
+              <div class="row"><span>Embarquement</span><strong>${offer.boarding}</strong></div>
+              <div class="row"><span>Transport à payer au chauffeur</span><strong>${formatFCFA(offer.price)}</strong></div>
+            </div>
+
+            <div class="total">Frais TACLAR payés : ${formatFCFA(taclarFee)}</div>
+
+            <div class="note">
+              Ce reçu confirme uniquement le paiement des frais de mise en relation TACLAR.
+              ${rendezvousText(offer)}
+              Le transport reste payé directement au chauffeur selon le prix indiqué.
+            </div>
+
+            <div class="actions">
+              <button onclick="window.print()">Enregistrer en PDF / Imprimer</button>
+              <button onclick="window.close()">Fermer</button>
+            </div>
+          </div>
+          <script>
+            setTimeout(() => window.print(), 400);
+          <\/script>
+        </body>
+        </html>
+      `;
+
+      const win = window.open("", "_blank");
+      if (!win) {
+        alert("Autorisez les fenêtres pop-up pour générer le reçu.");
+        return;
+      }
+      win.document.open();
+      win.document.write(receiptHtml);
+      win.document.close();
+    }
+
+    function printGroupReceipt(groupReceiptId) {
+      const items = paidReservations().filter(({ req }) => req.groupReceiptId === groupReceiptId);
+      if (!items.length) {
+        alert("Aucun reçu groupe trouvé.");
+        return;
+      }
+
+      const first = items[0];
+      const sameOffer = items.every(item => item.offer.id === first.offer.id);
+      const today = new Date().toLocaleDateString("fr-FR");
+      const totalFee = items.length * taclarFee;
+
+      const passengerRows = items.map(({ offer, req }, index) => `
+        <tr>
+          <td>${index + 1}</td>
+          <td>${req.clientName}</td>
+          <td>${req.clientPhone}</td>
+          <td>${offer.axis}</td>
+          <td>${offer.driver}</td>
+          <td>${offer.phone}</td>
+        </tr>
+      `).join("");
+
+      const receiptHtml = `
+        <!doctype html>
+        <html lang="fr">
+        <head>
+          <meta charset="utf-8">
+          <title>Reçu groupe ${groupReceiptId}</title>
+          <style>
+            * { box-sizing: border-box; }
+            body { font-family: Arial, Helvetica, sans-serif; color: #07112b; margin: 0; padding: 24px; background: #f8fafc; }
+            .receipt { max-width: 900px; margin: 0 auto; background: white; border: 1px solid #dbe4ef; border-radius: 18px; padding: 24px; }
+            .head { display: flex; justify-content: space-between; gap: 16px; border-bottom: 4px solid #07858a; padding-bottom: 16px; margin-bottom: 18px; }
+            .brand { font-size: 34px; font-weight: 900; color: #07858a; }
+            .tag { color: #64748b; font-weight: 700; margin-top: 4px; }
+            .badge { display: inline-block; background: #dcfce7; color: #166534; border-radius: 999px; padding: 7px 12px; font-weight: 900; }
+            h1 { font-size: 24px; margin: 0 0 8px; }
+            h2 { font-size: 17px; margin: 18px 0 8px; color: #07858a; }
+            .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+            .box { border: 1px solid #e2e8f0; border-radius: 14px; padding: 12px; background: #f8fafc; }
+            .row { display: flex; justify-content: space-between; gap: 12px; border-bottom: 1px solid #e2e8f0; padding: 9px 0; }
+            .row:last-child { border-bottom: 0; }
+            .row span { color: #64748b; }
+            .row strong { text-align: right; }
+            table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+            th, td { border: 1px solid #e2e8f0; padding: 8px; text-align: left; font-size: 13px; }
+            th { background: #07858a; color: white; }
+            .total { background: #07858a; color: white; border-radius: 14px; padding: 14px; font-size: 20px; font-weight: 900; text-align: right; margin-top: 14px; }
+            .note { background: #fff7ed; border: 1px solid #fed7aa; border-radius: 14px; padding: 12px; color: #9a3412; margin-top: 16px; }
+            .actions { margin-top: 18px; display: flex; gap: 10px; }
+            button { border: 0; border-radius: 12px; padding: 12px 14px; font-weight: 900; background: #07858a; color: white; cursor: pointer; }
+            @media print {
+              body { background: white; padding: 0; }
+              .receipt { border: 0; border-radius: 0; max-width: none; }
+              .actions { display: none; }
+            }
+            @media(max-width: 700px) { .grid, .head { grid-template-columns: 1fr; display: block; } .head > div:last-child { margin-top: 12px; } }
+          </style>
+        </head>
+        <body>
+          <div class="receipt">
+            <div class="head">
+              <div>
+                <div class="brand">TACLAR</div>
+                <div class="tag">Reçu groupe - frais de mise en relation</div>
+              </div>
+              <div>
+                <h1>Reçu ${groupReceiptId}</h1>
+                <div>Date : <strong>${today}</strong></div>
+                <div style="margin-top:8px"><span class="badge">Payé en groupe</span></div>
+              </div>
+            </div>
+
+            <div class="grid">
+              <div class="box">
+                <h2>Responsable du groupe</h2>
+                <div class="row"><span>Nom</span><strong>${first.req.groupLeader || first.req.clientName}</strong></div>
+                <div class="row"><span>Téléphone</span><strong>${first.req.clientPhone}</strong></div>
+                <div class="row"><span>Nombre de places</span><strong>${items.length}</strong></div>
+              </div>
+              <div class="box">
+                <h2>Trajet</h2>
+                <div class="row"><span>Axe</span><strong>${sameOffer ? first.offer.axis : "Plusieurs trajets"}</strong></div>
+                <div class="row"><span>Date</span><strong>${sameOffer ? first.offer.day : "Voir tableau"}</strong></div>
+                <div class="row"><span>Heure d'enregistrement</span><strong>${sameOffer ? first.offer.checkinTime || "45 min avant départ" : "Voir tableau"}</strong></div>
+                <div class="row"><span>Heure de départ</span><strong>${sameOffer ? first.offer.time : "Voir tableau"}</strong></div>
+                <div class="row"><span>Embarquement</span><strong>${sameOffer ? first.offer.boarding : "Voir tableau"}</strong></div>
+              </div>
+            </div>
+
+            ${sameOffer ? `
+              <h2>Chauffeur</h2>
+              <div class="box">
+                <div class="row"><span>Nom</span><strong>${first.offer.driver}</strong></div>
+                <div class="row"><span>Téléphone</span><strong>${first.offer.phone}</strong></div>
+                <div class="row"><span>Véhicule</span><strong>${first.offer.vehicle}</strong></div>
+                <div class="row"><span>Plaque</span><strong>${first.offer.plate}</strong></div>
+                <div class="row"><span>Transport par place</span><strong>${formatFCFA(first.offer.price)}</strong></div>
+              </div>
+            ` : ""}
+
+            <h2>Personnes couvertes par le paiement groupe</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Nom</th>
+                  <th>Téléphone</th>
+                  <th>Axe</th>
+                  <th>Chauffeur</th>
+                  <th>Téléphone chauffeur</th>
+                </tr>
+              </thead>
+              <tbody>${passengerRows}</tbody>
+            </table>
+
+            <div class="total">Total frais TACLAR payés : ${formatFCFA(totalFee)}</div>
+
+            <div class="note">
+              Ce reçu groupe confirme le paiement des frais de mise en relation TACLAR pour les personnes listées.
+              ${sameOffer ? rendezvousText(first.offer) : ""}
+              Le transport reste payé directement au chauffeur selon le prix indiqué.
+            </div>
+
+            <div class="actions">
+              <button onclick="window.print()">Enregistrer en PDF / Imprimer</button>
+              <button onclick="window.close()">Fermer</button>
+            </div>
+          </div>
+          <script>
+            setTimeout(() => window.print(), 400);
+          <\/script>
+        </body>
+        </html>
+      `;
+
+      const win = window.open("", "_blank");
+      if (!win) {
+        alert("Autorisez les fenêtres pop-up pour générer le reçu groupe.");
+        return;
+      }
+      win.document.open();
+      win.document.write(receiptHtml);
+      win.document.close();
+    }
+
+    fillSelects();
+    openInitialPanel();
+    startFirebaseSync();
+    render();
+    window.addEventListener("hashchange", () => {
+      openInitialPanel();
+      render();
+    });
+  </script>
+</body>
+</html>
