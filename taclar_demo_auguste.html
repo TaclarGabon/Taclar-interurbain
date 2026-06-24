@@ -1,0 +1,391 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#078f91">
+    <title>TACLAR - Démonstration nouveau chauffeur</title>
+    <style>
+      :root {
+        font-family: Arial, Helvetica, sans-serif;
+        color: #11213b;
+        background: #eefbff;
+        font-synthesis: none;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: linear-gradient(135deg, #effcff 0%, #fffde9 100%);
+      }
+      button, input, select { font: inherit; }
+      button { cursor: pointer; }
+      button:disabled { cursor: not-allowed; opacity: .48; }
+      .shell { width: min(1120px, calc(100% - 28px)); margin: 18px auto 48px; }
+      header {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 18px 20px;
+        border: 3px solid #08a6b7;
+        border-right-color: #f3cc00;
+        border-radius: 18px;
+        background: rgba(255,255,255,.9);
+        box-shadow: 0 12px 34px rgba(15, 67, 94, .1);
+      }
+      .logo {
+        display: grid;
+        width: 66px;
+        height: 66px;
+        flex: 0 0 66px;
+        place-items: center;
+        border: 5px solid #f2ce00;
+        border-radius: 18px;
+        background: #078f91;
+        color: #ffe500;
+        font-size: 18px;
+        font-weight: 900;
+      }
+      .eyebrow { margin: 0 0 3px; color: #007c81; font-size: 14px; font-weight: 800; }
+      h1 { margin: 0; font-size: clamp(25px, 4vw, 38px); line-height: 1.05; }
+      header p:last-child { margin: 7px 0 0; color: #58708a; }
+      .demo-badge {
+        margin-left: auto;
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: #fff3bd;
+        color: #795c00;
+        font-size: 13px;
+        font-weight: 800;
+        white-space: nowrap;
+      }
+      .layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1.7fr) minmax(290px, .8fr);
+        gap: 16px;
+        margin-top: 16px;
+      }
+      .panel {
+        border: 1px solid #d4dfeb;
+        border-radius: 15px;
+        background: #fff;
+        box-shadow: 0 12px 30px rgba(22, 55, 90, .08);
+      }
+      .main-panel { padding: 22px; }
+      .side-panel { padding: 20px; align-self: start; position: sticky; top: 12px; }
+      h2 { margin: 0 0 6px; font-size: 24px; }
+      .intro { margin: 0 0 20px; color: #5d7088; line-height: 1.45; }
+      .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+      label { display: block; margin-bottom: 6px; font-size: 14px; font-weight: 800; }
+      input, select {
+        width: 100%;
+        min-height: 46px;
+        padding: 10px 12px;
+        border: 1px solid #cbd8e7;
+        border-radius: 10px;
+        outline: none;
+        background: #fff;
+        color: #16233b;
+      }
+      input:focus, select:focus { border-color: #078f91; box-shadow: 0 0 0 3px rgba(7,143,145,.13); }
+      input[readonly] { background: #f5f8fc; color: #52657a; }
+      input[type="file"] { padding: 8px; }
+      .step-box {
+        margin: 16px 0;
+        padding: 13px;
+        border: 1px solid #ffcc8c;
+        border-radius: 12px;
+        background: #fff7ed;
+        line-height: 1.4;
+      }
+      .status-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; }
+      .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+      .btn {
+        min-height: 44px;
+        padding: 10px 15px;
+        border: 0;
+        border-radius: 10px;
+        font-weight: 850;
+      }
+      .primary { background: #078f91; color: #fff; }
+      .deposit { background: #ffd78f; color: #644400; }
+      .secondary { border: 1px solid #cbd8e7; background: #fff; color: #17263e; }
+      .validate { width: 100%; margin-top: 10px; background: #2161ed; color: #fff; }
+      .success {
+        margin-top: 14px;
+        padding: 13px;
+        border: 1px solid #a7e9c0;
+        border-radius: 12px;
+        background: #eafbf1;
+        color: #125b31;
+        line-height: 1.4;
+      }
+      .notice {
+        padding: 12px;
+        border: 1px solid #a5e6ee;
+        border-radius: 11px;
+        background: #edfdff;
+        line-height: 1.35;
+      }
+      .driver-card {
+        margin-top: 14px;
+        padding: 14px;
+        border: 1px solid #d6e1ed;
+        border-radius: 13px;
+        background: #fbfdff;
+      }
+      .driver-card h3 { margin: 0 0 4px; font-size: 18px; }
+      .route { margin: 0 0 12px; color: #068589; font-weight: 800; }
+      .row {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 9px 0;
+        border-bottom: 1px solid #e2e9f0;
+      }
+      .row:last-of-type { border-bottom: 0; }
+      .row strong { text-align: right; }
+      .pill {
+        display: inline-block;
+        margin-top: 10px;
+        padding: 6px 9px;
+        border-radius: 999px;
+        background: #dff8e8;
+        color: #087637;
+        font-size: 12px;
+        font-weight: 900;
+      }
+      .hidden { display: none !important; }
+      .progress {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 6px;
+        margin: 14px 0 18px;
+      }
+      .progress span { height: 7px; border-radius: 999px; background: #dbe4ee; }
+      .progress span.done { background: #078f91; }
+      .footnote { margin: 16px 0 0; color: #6c7e91; font-size: 12px; }
+      @media (max-width: 760px) {
+        .shell { width: min(100% - 18px, 680px); margin-top: 9px; }
+        header { align-items: flex-start; padding: 14px; }
+        .logo { width: 52px; height: 52px; flex-basis: 52px; border-radius: 14px; font-size: 14px; }
+        header p:last-child { font-size: 13px; }
+        .demo-badge { display: none; }
+        .layout { grid-template-columns: 1fr; }
+        .side-panel { position: static; }
+        .main-panel, .side-panel { padding: 16px; }
+        .form-grid, .status-grid { grid-template-columns: 1fr; }
+        .actions .btn { flex: 1 1 100%; }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <header>
+        <div class="logo">TACLAR</div>
+        <div>
+          <p class="eyebrow">TACLAR Interurbain - Démonstration</p>
+          <h1>Nouveau chauffeur</h1>
+          <p>Inscription, vérification du dossier et validation de la caution.</p>
+        </div>
+        <span class="demo-badge">Démo sans données enregistrées</span>
+      </header>
+
+      <div class="layout">
+        <section class="panel main-panel">
+          <h2>Rejoindre TACLAR</h2>
+          <p class="intro">Le chauffeur complète son dossier. TACLAR valide ensuite les documents, puis la caution.</p>
+
+          <div class="progress" aria-label="Progression">
+            <span id="p1"></span><span id="p2"></span><span id="p3"></span><span id="p4"></span>
+          </div>
+
+          <form id="driverForm">
+            <div class="form-grid">
+              <div>
+                <label for="name">Nom et prénom chauffeur</label>
+                <input id="name" required placeholder="Ex : Serge Ndong">
+              </div>
+              <div>
+                <label for="phone">Téléphone chauffeur</label>
+                <input id="phone" required inputmode="tel" placeholder="Ex : +241 77 45 90 12">
+              </div>
+              <div>
+                <label for="vehicle">Type de véhicule</label>
+                <input id="vehicle" required placeholder="Ex : Toyota Noah">
+              </div>
+              <div>
+                <label for="plate">Plaque</label>
+                <input id="plate" required placeholder="Ex : GA-421-LB">
+              </div>
+              <div>
+                <label for="axis">Axe souhaité</label>
+                <select id="axis" required>
+                  <option value="">-- Choisir un axe --</option>
+                  <option>Libreville → Lambaréné</option>
+                  <option>Libreville → Mitzic</option>
+                  <option>Libreville → Oyem → Bitam</option>
+                </select>
+              </div>
+              <div>
+                <label for="price">Prix transport / place</label>
+                <input id="price" readonly placeholder="Calculé selon l'axe">
+              </div>
+              <div>
+                <label for="seats">Nombre de places</label>
+                <input id="seats" required type="number" min="1" max="12" inputmode="numeric" placeholder="Ex : 6">
+              </div>
+              <div>
+                <label for="deposit">Dépôt de garantie calculé</label>
+                <input id="deposit" readonly value="0 FCFA">
+              </div>
+            </div>
+
+            <div class="step-box">
+              <strong>Étape 1 : dossier chauffeur</strong><br>
+              Ajoutez le permis de conduire et la pièce d'identité, puis soumettez le dossier à TACLAR.
+            </div>
+
+            <div class="form-grid">
+              <div>
+                <label for="license">Permis de conduire</label>
+                <input id="license" required type="file" accept="image/*,.pdf">
+              </div>
+              <div>
+                <label for="identity">Pièce d'identité</label>
+                <input id="identity" required type="file" accept="image/*,.pdf">
+              </div>
+            </div>
+
+            <div class="status-grid">
+              <div>
+                <label>Statut dossier</label>
+                <input id="documentStatus" readonly value="Non envoyé">
+              </div>
+              <div>
+                <label>Statut caution</label>
+                <input id="depositStatus" readonly value="Non déposée">
+              </div>
+            </div>
+
+            <div class="actions">
+              <button class="btn primary" id="submitDocuments" type="submit">Soumettre le dossier chauffeur</button>
+              <button class="btn deposit" id="payDeposit" type="button" disabled>Déposer la caution</button>
+              <button class="btn secondary" id="resetDemo" type="button">Recommencer la démonstration</button>
+            </div>
+          </form>
+
+          <div id="driverMessage" class="notice" style="margin-top:14px">
+            Remplissez le dossier et ajoutez les deux documents.
+          </div>
+        </section>
+
+        <aside class="panel side-panel">
+          <h2>Validation TACLAR</h2>
+          <p class="intro">Cette colonne simule les actions de l'équipe TACLAR pendant la démonstration.</p>
+
+          <div id="emptyAdmin" class="notice">Aucun dossier chauffeur reçu pour le moment.</div>
+
+          <div id="adminCard" class="driver-card hidden">
+            <h3 id="adminName"></h3>
+            <p id="adminRoute" class="route"></p>
+            <div class="row"><span>Téléphone</span><strong id="adminPhone"></strong></div>
+            <div class="row"><span>Véhicule</span><strong id="adminVehicle"></strong></div>
+            <div class="row"><span>Plaque</span><strong id="adminPlate"></strong></div>
+            <div class="row"><span>Places</span><strong id="adminSeats"></strong></div>
+            <div class="row"><span>Caution</span><strong id="adminDeposit"></strong></div>
+            <div class="row"><span>Statut</span><strong id="adminStatus">Dossier reçu</strong></div>
+
+            <button class="btn validate" id="validateDocuments" type="button">Valider les documents</button>
+            <button class="btn validate hidden" id="validateDeposit" type="button">Valider la caution reçue</button>
+            <span id="activePill" class="pill hidden">Chauffeur actif</span>
+          </div>
+
+          <p class="footnote">Démonstration temporaire : aucune pièce d'identité et aucune donnée ne sont envoyées sur un serveur.</p>
+        </aside>
+      </div>
+    </main>
+
+    <script>
+      const axisPrices = {
+        "Libreville → Lambaréné": 18000,
+        "Libreville → Mitzic": 22000,
+        "Libreville → Oyem → Bitam": 25000
+      };
+
+      const $ = (id) => document.getElementById(id);
+      const money = (amount) => Number(amount || 0).toLocaleString("fr-FR") + " FCFA";
+      let stage = 0;
+
+      function setStage(next) {
+        stage = next;
+        ["p1", "p2", "p3", "p4"].forEach((id, index) => $(id).classList.toggle("done", index < stage));
+      }
+
+      function updateAmounts() {
+        const price = axisPrices[$("axis").value] || 0;
+        const seats = Math.max(0, Number($("seats").value) || 0);
+        $("price").value = price ? money(price) : "";
+        $("deposit").value = money(seats * 2000);
+      }
+
+      $("axis").addEventListener("change", updateAmounts);
+      $("seats").addEventListener("input", updateAmounts);
+
+      $("driverForm").addEventListener("submit", (event) => {
+        event.preventDefault();
+        if (!$("driverForm").checkValidity()) {
+          $("driverForm").reportValidity();
+          return;
+        }
+        $("documentStatus").value = "Envoyé à TACLAR";
+        $("submitDocuments").disabled = true;
+        $("emptyAdmin").classList.add("hidden");
+        $("adminCard").classList.remove("hidden");
+        $("adminName").textContent = $("name").value.trim();
+        $("adminRoute").textContent = $("axis").value;
+        $("adminPhone").textContent = $("phone").value.trim();
+        $("adminVehicle").textContent = $("vehicle").value.trim();
+        $("adminPlate").textContent = $("plate").value.trim();
+        $("adminSeats").textContent = $("seats").value;
+        $("adminDeposit").textContent = $("deposit").value;
+        $("adminStatus").textContent = "Documents à vérifier";
+        $("driverMessage").innerHTML = "<strong>Dossier envoyé.</strong> TACLAR doit maintenant valider les documents.";
+        setStage(1);
+        if (window.innerWidth < 760) $("adminCard").scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+
+      $("validateDocuments").addEventListener("click", () => {
+        $("documentStatus").value = "Documents validés";
+        $("adminStatus").textContent = "Documents validés";
+        $("validateDocuments").classList.add("hidden");
+        $("payDeposit").disabled = false;
+        $("driverMessage").innerHTML = "<strong>Documents validés.</strong> Le chauffeur peut maintenant déposer la caution de " + $("deposit").value + ".";
+        setStage(2);
+      });
+
+      $("payDeposit").addEventListener("click", () => {
+        $("depositStatus").value = "Caution déposée";
+        $("payDeposit").disabled = true;
+        $("validateDeposit").classList.remove("hidden");
+        $("adminStatus").textContent = "Caution reçue, validation requise";
+        $("driverMessage").innerHTML = "<strong>Caution déposée.</strong> TACLAR doit confirmer sa réception.";
+        setStage(3);
+        if (window.innerWidth < 760) $("validateDeposit").scrollIntoView({ behavior: "smooth", block: "center" });
+      });
+
+      $("validateDeposit").addEventListener("click", () => {
+        $("depositStatus").value = "Caution validée";
+        $("validateDeposit").classList.add("hidden");
+        $("activePill").classList.remove("hidden");
+        $("adminStatus").textContent = "Dossier complet";
+        $("driverMessage").className = "success";
+        $("driverMessage").innerHTML = "<strong>Dossier complet.</strong><br>Le chauffeur est actif et peut maintenant publier un trajet.";
+        setStage(4);
+      });
+
+      $("resetDemo").addEventListener("click", () => window.location.reload());
+      setStage(0);
+    </script>
+  </body>
+</html>
