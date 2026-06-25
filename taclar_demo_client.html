@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#078f91">
+  <title>TACLAR - Démonstration client</title>
+  <style>
+    :root{font-family:Arial,Helvetica,sans-serif;color:#11213b;background:#eefbff}
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;background:linear-gradient(135deg,#effcff,#fffde9)}
+    button,input,select{font:inherit}button{cursor:pointer}button:disabled{cursor:not-allowed;opacity:.48}
+    .shell{width:min(1120px,calc(100% - 28px));margin:18px auto 48px}
+    header{display:flex;align-items:center;gap:16px;padding:18px 20px;border:3px solid #08a6b7;border-right-color:#f3cc00;border-radius:18px;background:#ffffffeb;box-shadow:0 12px 34px #0f435e1a}
+    .logo{display:grid;width:66px;height:66px;flex:0 0 66px;place-items:center;border:5px solid #f2ce00;border-radius:18px;background:#078f91;color:#ffe500;font-size:18px;font-weight:900}
+    .eyebrow{margin:0 0 3px;color:#007c81;font-size:14px;font-weight:800}h1{margin:0;font-size:clamp(25px,4vw,38px);line-height:1.05}header p:last-child{margin:7px 0 0;color:#58708a}.badge-demo{margin-left:auto;padding:8px 12px;border-radius:999px;background:#fff3bd;color:#795c00;font-size:13px;font-weight:800}
+    .layout{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(290px,.8fr);gap:16px;margin-top:16px}.panel{padding:20px;border:1px solid #d4dfeb;border-radius:15px;background:#fff;box-shadow:0 12px 30px #16375a14}.side{align-self:start;position:sticky;top:12px}
+    h2,h3{margin:0}.intro{margin:7px 0 18px;color:#5d7088;line-height:1.45}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}label{display:block;margin-bottom:6px;font-size:14px;font-weight:800}input,select{width:100%;min-height:46px;padding:10px 12px;border:1px solid #cbd8e7;border-radius:10px;background:#fff;color:#16233b}
+    .notice{margin-top:13px;padding:12px;border:1px solid #a5e6ee;border-radius:11px;background:#edfdff;line-height:1.35}.success{border-color:#a7e9c0;background:#eafbf1;color:#125b31}.warning{border-color:#ffcc8c;background:#fff7ed;color:#70410a}.hidden{display:none!important}
+    .offer{display:grid;grid-template-columns:1.2fr .8fr .7fr .7fr auto;gap:9px;align-items:center;margin-top:10px;padding:12px;border:1px solid #d7e2ec;border-radius:12px;background:#fbfdff}.offer strong{display:block}.offer small{display:block;color:#6b7d90;margin-top:3px}.pill{display:inline-block;padding:6px 9px;border-radius:999px;background:#dff8e8;color:#087637;font-size:12px;font-weight:900}.btn{min-height:42px;padding:9px 13px;border:0;border-radius:10px;font-weight:850}.primary{background:#078f91;color:#fff}.blue{background:#2563eb;color:#fff}.orange{background:#f5a623;color:#302000}.secondary{border:1px solid #cbd8e7;background:#fff;color:#17263e}.actions{display:flex;flex-wrap:wrap;gap:9px;margin-top:13px}
+    .details{grid-column:1/-1;padding:12px;border:1px solid #a5e6ee;border-radius:10px;background:#edfdff}.details-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.detail{padding:8px;border-radius:8px;background:#fff}.detail small{font-weight:800}.booking-box{margin-top:14px;padding:14px;border:2px solid #078f91;border-radius:13px;background:#effdfa}
+    .row{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid #e1e8ef}.row:last-child{border-bottom:0}.row strong{text-align:right}.receipt{margin-top:14px;padding:14px;border:1px solid #d7e2ec;border-radius:12px;background:#fff}
+    @media(max-width:800px){.shell{width:calc(100% - 18px);margin-top:9px}header{align-items:flex-start;padding:14px}.logo{width:52px;height:52px;flex-basis:52px;border-radius:14px;font-size:14px}.badge-demo{display:none}.layout{grid-template-columns:1fr}.side{position:static}.panel{padding:15px}.grid{grid-template-columns:1fr}.offer{grid-template-columns:1fr 1fr}.offer .offer-main{grid-column:1/-1}.offer .offer-action{grid-column:1/-1}.offer-action .btn{width:100%}.details-grid{grid-template-columns:1fr}.actions .btn{flex:1 1 100%}}
+  </style>
+</head>
+<body>
+<main class="shell">
+  <header><div class="logo">TACLAR</div><div><p class="eyebrow">TACLAR Interurbain - Démonstration</p><h1>Espace client</h1><p>Recherche du trajet, réservation, confirmation chauffeur et paiement TACLAR.</p></div><span class="badge-demo">Démo sans données enregistrées</span></header>
+  <div class="layout">
+    <section class="panel">
+      <h2>Chercher un trajet</h2>
+	      <p class="intro">Choisis l’axe et une date entre le 15 et le 25 juillet 2026. Les véhicules disponibles apparaissent automatiquement.</p>
+	      <div class="grid">
+	        <div><label>Axe recherché</label><select id="axis"><option value="">-- Choisir un axe --</option><option>Libreville → Lambaréné</option><option>Libreville → Mitzic</option><option>Libreville → Oyem → Bitam</option></select></div>
+	        <div><label>Date souhaitée</label><input id="date" type="date" min="2026-07-15" max="2026-07-25"></div>
+        <div><label>Nom du client / responsable</label><input id="clientName" placeholder="Ex : Otilia Mba"></div>
+        <div><label>Téléphone</label><input id="clientPhone" inputmode="tel" placeholder="Ex : +241 66 12 34 56"></div>
+        <div><label>Mode de réservation</label><select id="mode"><option value="single">Individuel - une place</option><option value="group">Groupe / famille</option></select></div>
+        <div id="groupCountWrap" class="hidden"><label>Nombre de places</label><input id="groupCount" type="number" min="2" max="6" value="2"></div>
+      </div>
+      <div id="groupNamesWrap" class="hidden"><label style="margin-top:12px">Noms des passagers</label><div id="groupNames" class="grid"></div></div>
+	      <div class="actions"><button class="btn secondary" id="reset">Recommencer</button></div>
+	      <div class="notice">
+	        <strong>Dates de démonstration :</strong>
+	        15 juillet (Lambaréné), 17 juillet (Mitzic), 20 juillet (Oyem-Bitam),
+	        22 juillet (Lambaréné) et 25 juillet (Mitzic).
+	      </div>
+	      <div id="searchNotice" class="notice">Sélectionne un axe et une date pour afficher les chauffeurs.</div>
+      <div id="offers"></div>
+      <div id="bookingBox" class="booking-box hidden">
+        <h3>Demande envoyée au chauffeur</h3>
+        <div id="bookingSummary" class="notice"></div>
+        <div id="driverResponse" class="notice warning">En attente de la réponse du chauffeur.</div>
+        <div class="actions"><button class="btn blue" id="confirmDriver">Simuler la confirmation chauffeur</button></div>
+      </div>
+    </section>
+    <aside class="panel side">
+      <h2>Suivi client</h2>
+      <div class="notice"><div class="row"><span>Frais TACLAR</span><strong>2 000 FCFA / place</strong></div><div class="row"><span>Transport</span><strong>Payé au chauffeur</strong></div><div class="row"><span>Détails complets</span><strong>Après paiement</strong></div></div>
+      <div id="paymentBox" class="hidden">
+        <div class="notice success"><strong>Place confirmée.</strong><br>Tu peux maintenant payer les frais de mise en relation TACLAR.</div>
+        <div class="row"><span>Montant à payer</span><strong id="feeTotal"></strong></div>
+        <button class="btn orange" id="pay" style="width:100%;margin-top:12px">Payer les frais TACLAR</button>
+      </div>
+      <div id="receipt" class="receipt hidden">
+        <h3>Réservation payée</h3>
+        <div class="row"><span>Responsable</span><strong id="rName"></strong></div>
+        <div class="row"><span>Passagers</span><strong id="rPassengers"></strong></div>
+        <div class="row"><span>Chauffeur</span><strong id="rDriver"></strong></div>
+        <div class="row"><span>Téléphone chauffeur</span><strong id="rPhone"></strong></div>
+        <div class="row"><span>Véhicule</span><strong id="rVehicle"></strong></div>
+        <div class="row"><span>Plaque</span><strong id="rPlate"></strong></div>
+        <div class="row"><span>Embarquement</span><strong id="rBoarding"></strong></div>
+        <div class="row"><span>Enregistrement</span><strong id="rCheckin"></strong></div>
+        <div class="row"><span>Départ</span><strong id="rDeparture"></strong></div>
+        <div class="row"><span>Frais TACLAR payés</span><strong id="rFee"></strong></div>
+        <button class="btn blue" style="width:100%;margin-top:12px" onclick="window.print()">Imprimer le reçu</button>
+      </div>
+    </aside>
+  </div>
+</main>
+<script>
+  const $=id=>document.getElementById(id),money=n=>Number(n||0).toLocaleString("fr-FR")+" FCFA";
+	  const offers=[
+	    {id:1,date:"2026-07-15",axis:"Libreville → Lambaréné",driver:"Marcel Nguema",phone:"+241 77 45 90 12",vehicle:"Toyota Noah",plate:"GA-421-LB",seats:4,checkin:"06h00",departure:"07h00",boarding:"Gare routière",price:18000},
+	    {id:2,date:"2026-07-15",axis:"Libreville → Lambaréné",driver:"Alain Moussavou",phone:"+241 66 28 17 44",vehicle:"Hyundai Staria",plate:"GA-308-LB",seats:6,checkin:"08h00",departure:"09h00",boarding:"PK8 - station",price:18000},
+	    {id:3,date:"2026-07-17",axis:"Libreville → Mitzic",driver:"Franck Medza",phone:"+241 74 91 17 67",vehicle:"Hyundai H1",plate:"GA-615-MI",seats:6,checkin:"05h00",departure:"05h45",boarding:"Charbonnages - rond-point",price:22000},
+	    {id:4,date:"2026-07-17",axis:"Libreville → Mitzic",driver:"Blaise Bekale",phone:"+241 62 33 18 05",vehicle:"Toyota Hiace",plate:"GA-744-MI",seats:5,checkin:"07h00",departure:"08h00",boarding:"Gare d'Owendo",price:22000},
+	    {id:5,date:"2026-07-20",axis:"Libreville → Oyem → Bitam",driver:"Jérôme Ndong",phone:"+241 75 40 90 12",vehicle:"Ford Edge",plate:"GA-284-WN",seats:5,checkin:"05h30",departure:"06h30",boarding:"PK8 - gare routière",price:25000},
+	    {id:6,date:"2026-07-20",axis:"Libreville → Oyem → Bitam",driver:"Patrick Mba",phone:"+241 66 70 12 29",vehicle:"Toyota Prado",plate:"GA-532-WN",seats:4,checkin:"07h00",departure:"08h00",boarding:"Charbonnages",price:25000},
+	    {id:7,date:"2026-07-20",axis:"Libreville → Oyem → Bitam",driver:"Daniel Mengue",phone:"+241 77 18 62 40",vehicle:"Mitsubishi Pajero",plate:"GA-913-WN",seats:6,checkin:"09h00",departure:"10h00",boarding:"Gare routière",price:25000},
+	    {id:8,date:"2026-07-22",axis:"Libreville → Lambaréné",driver:"Serge Mba",phone:"+241 74 55 31 08",vehicle:"Kia Carnival",plate:"GA-126-LB",seats:5,checkin:"06h30",departure:"07h30",boarding:"Gare d'Owendo",price:18000},
+	    {id:9,date:"2026-07-25",axis:"Libreville → Mitzic",driver:"Oliver Koli",phone:"+241 75 40 90 12",vehicle:"Nissan X-Trail",plate:"GA-649-MI",seats:4,checkin:"05h30",departure:"06h30",boarding:"PK8 - station",price:22000},
+	    {id:10,date:"2026-07-25",axis:"Libreville → Mitzic",driver:"Mario Obame",phone:"+241 66 91 04 37",vehicle:"Opel Zafira",plate:"GA-587-MI",seats:5,checkin:"08h00",departure:"09h00",boarding:"Charbonnages",price:22000}
+	  ];
+  let selected=null,places=1,passengers=[];
+  $("mode").addEventListener("change",()=>{const group=$("mode").value==="group";$("groupCountWrap").classList.toggle("hidden",!group);$("groupNamesWrap").classList.toggle("hidden",!group);if(group)renderNames()});
+  $("groupCount").addEventListener("input",renderNames);
+  function renderNames(){const count=Math.max(2,Number($("groupCount").value||2));$("groupCount").value=count;$("groupNames").innerHTML=Array.from({length:count},(_,i)=>`<input class="passengerName" placeholder="Nom passager ${i+1}">`).join("")}
+	  function formatDate(value){return new Date(value+"T12:00:00").toLocaleDateString("fr-FR",{day:"2-digit",month:"2-digit",year:"numeric"})}
+	  function renderOffers(){
+	    const axis=$("axis").value,date=$("date").value;
+	    if(!axis||!date){
+	      $("searchNotice").classList.remove("hidden");
+	      $("offers").innerHTML="";
+	      return;
+	    }
+	    const list=offers.filter(o=>o.axis===axis&&o.date===date);
+	    $("searchNotice").classList.add("hidden");
+	    $("offers").innerHTML=list.length?list.map(o=>`<div class="offer"><div class="offer-main"><strong>${o.vehicle}</strong><small>${o.axis} · ${formatDate(o.date)}</small></div><div><strong>${o.seats} place(s)</strong><small>disponibles</small></div><div><strong>${o.checkin}</strong><small>enregistrement</small></div><div><strong>${o.departure}</strong><small>départ</small></div><div class="offer-action"><button class="btn primary" onclick="toggleDetails(${o.id})">Voir les détails</button></div><div id="details-${o.id}" class="details hidden"><div class="details-grid"><div class="detail"><small>Chauffeur</small><strong>${o.driver}</strong></div><div class="detail"><small>Plaque</small><strong>${o.plate}</strong></div><div class="detail"><small>Prix / place</small><strong>${money(o.price)}</strong></div></div><div class="notice">Avant paiement TACLAR : téléphone chauffeur masqué et lieu précis protégé.</div><button class="btn blue" style="margin-top:10px" onclick="request(${o.id})">Demander ${$("mode").value==="group"?"les places":"une place"}</button></div></div>`).join(""):'<div class="notice warning">Aucun chauffeur disponible pour cet axe à cette date. Essaie une date indiquée dans la zone de démonstration.</div>';
+	  }
+	  $("axis").addEventListener("change",renderOffers);
+	  $("date").addEventListener("change",renderOffers);
+	  $("mode").addEventListener("change",renderOffers);
+  function toggleDetails(id){document.querySelectorAll(".details").forEach(el=>{if(el.id!=="details-"+id)el.classList.add("hidden")});$("details-"+id).classList.toggle("hidden")}
+  function request(id){
+    const name=$("clientName").value.trim(),phone=$("clientPhone").value.trim();if(!name||!phone){alert("Remplis le nom et le téléphone.");return}
+    selected=offers.find(o=>o.id===id);places=$("mode").value==="group"?Math.max(2,Number($("groupCount").value||2)):1;
+    passengers=$("mode").value==="group"?[...document.querySelectorAll(".passengerName")].map(i=>i.value.trim()):[name];
+    if(passengers.some(n=>!n)){alert("Remplis tous les noms des passagers.");return}if(places>selected.seats){alert("Il n'y a pas assez de places.");return}
+    $("bookingSummary").innerHTML=`<strong>${name}</strong> demande ${places} place(s) dans le véhicule ${selected.vehicle}.`;
+    $("bookingBox").classList.remove("hidden");$("bookingBox").scrollIntoView({behavior:"smooth",block:"center"});
+  }
+  $("confirmDriver").addEventListener("click",()=>{$("driverResponse").className="notice success";$("driverResponse").innerHTML="<strong>Réservation confirmée par le chauffeur.</strong>";$("confirmDriver").disabled=true;$("paymentBox").classList.remove("hidden");$("feeTotal").textContent=money(places*2000)});
+  $("pay").addEventListener("click",()=>{
+    $("pay").disabled=true;$("receipt").classList.remove("hidden");$("rName").textContent=$("clientName").value.trim();$("rPassengers").textContent=passengers.join(", ");
+    $("rDriver").textContent=selected.driver;$("rPhone").textContent=selected.phone;$("rVehicle").textContent=selected.vehicle;$("rPlate").textContent=selected.plate;
+    $("rBoarding").textContent=selected.boarding;$("rCheckin").textContent=selected.checkin;$("rDeparture").textContent=selected.departure;$("rFee").textContent=money(places*2000);
+    $("receipt").scrollIntoView({behavior:"smooth",block:"start"});
+  });
+  $("reset").addEventListener("click",()=>location.reload());
+</script>
+</body>
+</html>
