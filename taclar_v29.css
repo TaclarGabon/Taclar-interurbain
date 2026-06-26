@@ -11,3 +11,17 @@
 /* V33 finale - outils de test déplacés en bas */
 .client-test-tools{margin-top:16px}
 .client-test-tools .actions{margin-top:10px}
+
+/* V34 - listes compactes Validation TACLAR et Booking */
+.compact-list{display:grid;gap:10px;margin-top:12px}
+.compact-item{border:1px solid var(--line);border-radius:16px;background:#fbfdff;overflow:hidden}
+.compact-item[open]{border-color:var(--teal);background:#ecfdfb}
+.compact-item summary{list-style:none;display:flex;justify-content:space-between;align-items:center;gap:12px;cursor:pointer;padding:14px;font-weight:900}
+.compact-item summary::-webkit-details-marker{display:none}
+.compact-item summary:after{content:'Ouvrir';font-size:12px;border-radius:999px;padding:6px 10px;background:#e2e8f0;color:#334155;font-weight:900;white-space:nowrap}
+.compact-item[open] summary:after{content:'Fermer';background:#ccfbf1;color:#0f766e}
+.compact-item summary small{display:block;color:var(--muted);font-weight:700;margin-top:4px}
+.compact-body{padding:0 14px 14px;border-top:1px dashed #cbd5e1}
+.booking-request{background:white}
+.admin-kpi{margin-top:14px;margin-bottom:14px}
+@media(max-width:850px){.compact-item summary{align-items:flex-start}.compact-item summary .badge{white-space:normal}.client-step-strip{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.client-step-strip div{padding:10px;min-height:96px}.client-step-strip span{width:28px;height:28px;font-size:14px;margin-right:4px}.client-step-strip strong{font-size:13px}.client-step-strip small{font-size:11px;margin-top:10px}}

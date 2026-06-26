@@ -25,7 +25,7 @@ function seatsTaken(offer){return liveReqsForOffer(offer.id).reduce((s,r)=>s+Num
 function paidSeats(offer){return paidReqsForOffer(offer.id).reduce((s,r)=>s+Number(r.seats||1),0)}
 function freeSeats(offer){return Math.max(0,Number(offer.seats||0)-Number(offer.booked||0)-seatsTaken(offer))}
 function phoneMask(p){p=String(p||'');return p.length>5?p.slice(0,7)+' ** ** '+p.slice(-2):'masqué'}
-function statusText(s){return {submitted:'Documents en cours de traitement',docs_validated:'Documents approuvés - frais d’enregistrement à payer',deposit_paid:'Frais d’enregistrement déclarés payés - vérification TACLAR',deposit_validated:'Frais d’enregistrement reçus - autorisation en attente',active:'Autorisé à publier',pending:'Demande envoyée',confirmed:'Confirmée chauffeur - frais TACLAR à payer',paid:'Commission TACLAR payée',refused:'Refusée',deleted:'Supprimée'}[s]||s||'-'}
+function statusText(s){return {submitted:'Documents en cours de traitement',docs_validated:'Documents approuvés - frais d’enregistrement à payer',deposit_paid:'Frais d’enregistrement déclarés payés - vérification TACLAR',deposit_validated:'Frais d’enregistrement reçus - autorisation en attente',active:'Autorisé à publier',pending:'Demande envoyée',confirmed:'Places confirmées - frais TACLAR à payer',payment_pending:'Paiement déclaré - confirmation TACLAR en attente',paid:'Paiement TACLAR confirmé',refused:'Refusée',deleted:'Supprimée'}[s]||s||'-'}
 function formatDateFr(value){if(!value)return '-';return new Date(value+'T12:00:00').toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'})}
 function fillAxisSelect(sel,empty='-- Choisir un axe --'){if(!sel)return;const v=sel.value;sel.innerHTML=`<option value="">${empty}</option>`+axes.map(a=>`<option value="${a}">${a}</option>`).join('');if(axes.includes(v))sel.value=v}
 function fillTimeSelect(sel,empty='-- Choisir --'){if(!sel)return;const v=sel.value;sel.innerHTML=`<option value="">${empty}</option>`+departureTimes.map(t=>`<option value="${t}">${t}</option>`).join('');if(departureTimes.includes(v))sel.value=v}
@@ -92,7 +92,7 @@ function header(active){
     client:'Espace client',
     portal:'Mise en relation client-chauffeur'
   };
-  return `<header class="hero"><div class="hero-inner"><div class="brand"><div class="logo">TACLAR</div><div><div class="axis-name">TACLAR Interurbain - V31 Firebase</div><h1>${pageTitles[active]||'TACLAR Interurbain'}</h1><p>Page séparée par rôle · synchronisation Firebase.</p></div></div></div></header>`
+  return `<header class="hero"><div class="hero-inner"><div class="brand"><div class="logo">TACLAR</div><div><div class="axis-name">TACLAR Interurbain</div><h1>${pageTitles[active]||'TACLAR Interurbain'}</h1><p>Page séparée par rôle · synchronisation Firebase.</p></div></div></div></header>`
 }
 function setShell(active,main){$('app').innerHTML=header(active)+main}
 function renderPage(){const page=document.body.dataset.page;if(page==='new')renderNewDriver();else if(page==='validation')renderValidation();else if(page==='publish')renderPublish();else if(page==='booking')renderBooking();else if(page==='client')renderClient();else renderPortal()}
@@ -137,11 +137,51 @@ function renderDriverDashboard(a){
 }
 async function driverPayDeposit(id){if(!confirm('Confirmer que les frais d’enregistrement ont été envoyés à TACLAR ?'))return;await updateDoc(id,{status:'deposit_paid',depositPaid:true,depositPaidAt:Date.now()})}
 function logoutDriver(){clearDriverSession();renderPage()}
-function renderValidation(){setShell('validation',`<div class="card"><h2>Validation TACLAR</h2><p>Interface interne : valide les documents, confirme la frais d’enregistrement reçue, puis autorise le chauffeur à publier.</p><div class="notice warning"><strong>Important :</strong> le chauffeur déclare lui-même le paiement des frais d’enregistrement depuis son espace. TACLAR confirme seulement sa réception.</div><div id="applicationsList" class="list" style="margin-top:14px"></div></div>`);renderApplicationsList()}
+
+function shortAxisName(axis){
+  const txt=String(axis||'').replace('Libreville → ','').replace('Libreville - ','');
+  return txt||'-';
+}
+function validationPriority(a){
+  if(!a.docsValidated) return 1;
+  if(a.docsValidated&&!a.depositPaid) return 2;
+  if(a.depositPaid&&!a.depositValidated) return 1;
+  if(a.depositValidated&&!a.active) return 2;
+  if(a.active) return 3;
+  return 4;
+}
+function requestPriorityStatus(status){
+  return {pending:1,payment_pending:2,confirmed:3,paid:4,refused:5,deleted:9}[status]||6;
+}
+function offerPriority(o){
+  const reqs=reqsForOffer(o.id).filter(r=>r.status!=='deleted');
+  if(reqs.some(r=>['pending','payment_pending','confirmed'].includes(r.status))) return 1;
+  if(reqs.some(r=>r.status==='paid')) return 2;
+  return 3;
+}
+function topRequestForOffer(o){
+  return reqsForOffer(o.id).filter(r=>r.status!=='deleted').sort((a,b)=>requestPriorityStatus(a.status)-requestPriorityStatus(b.status)||(b.updatedAt||b.createdAt||0)-(a.updatedAt||a.createdAt||0))[0];
+}
+function activeRequestSummary(o){
+  const r=topRequestForOffer(o);
+  if(!r) return `${o.driver} — ${shortAxisName(o.axis)} — ${freeSeats(o)} place(s) libres`;
+  return `${o.driver} — ${shortAxisName(o.axis)} — ${r.seats||1} place(s) demandée(s) — ${statusText(r.status)}`;
+}
+
+function renderValidation(){
+  const totalDispos=offers().length;
+  const totalRequests=requests().filter(r=>r.status!=='deleted').length;
+  const paidPlaces=requests().filter(r=>r.status==='paid').reduce((sum,r)=>sum+Number(r.seats||1),0);
+  const taclarTotal=paidPlaces*taclarFee;
+  setShell('validation',`<div class="card"><h2>Validation TACLAR / Admin</h2><p>Vue interne TACLAR : validation des chauffeurs, suivi des frais d’enregistrement et vue d’ensemble.</p><div class="kpi admin-kpi"><div><b>${totalDispos}</b><span>disponibilités</span></div><div><b>${totalRequests}</b><span>demandes</span></div><div><b>${paidPlaces}</b><span>places payées</span></div><div><b>${money(taclarTotal)}</b><span>frais TACLAR</span></div></div><div class="notice warning"><strong>Important :</strong> le chauffeur déclare lui-même le paiement des frais d’enregistrement depuis son espace. TACLAR confirme seulement la réception.</div><h3 style="margin-top:16px">Dossiers chauffeurs</h3><div id="applicationsList" class="compact-list" style="margin-top:14px"></div></div>`);
+  renderApplicationsList();
+}
 function renderApplicationsList(){
-  const box=$('applicationsList');if(!box)return;const list=apps().filter(a=>a.driverCode);
+  const box=$('applicationsList');
+  if(!box)return;
+  const list=apps().filter(a=>a.driverCode).sort((a,b)=>validationPriority(a)-validationPriority(b)||(b.updatedAt||b.createdAt||0)-(a.updatedAt||a.createdAt||0));
   if(!list.length){box.innerHTML='<div class="notice">Aucun dossier chauffeur reçu pour le moment.</div>';return}
-  box.innerHTML=list.map(a=>`<div class="item"><div class="item-top"><div><div class="name">${a.name}</div><div class="axis-name">${a.driverCode||'Ancien dossier'} · ${a.axis}</div><div>${a.vehicle} - ${a.plate}</div></div><span class="badge ${a.active?'ok':'warn'}">${statusText(a.status)}</span></div><div class="facts"><div class="fact"><small>Téléphone</small><strong>${a.phone}</strong></div><div class="fact"><small>Places déclarées</small><strong>${a.seats}</strong></div><div class="fact"><small>Prix axe</small><strong>${money(a.price)}</strong></div><div class="fact"><small>Frais attendus</small><strong>${money(a.deposit)}</strong></div><div class="fact"><small>Permis</small><strong>${a.licenseName||'-'}</strong></div><div class="fact"><small>Identité</small><strong>${a.idCardName||'-'}</strong></div></div><div class="actions"><button onclick="validateDriverDocuments('${a.id}')" ${a.docsValidated?'disabled':''}>Valider les documents</button><button onclick="validateDriverDeposit('${a.id}')" ${!a.depositPaid||a.depositValidated?'disabled':''}>Confirmer frais reçus</button><button class="blue" onclick="authorizeDriver('${a.id}')" ${!a.depositValidated||a.active?'disabled':''}>Autoriser à publier</button></div>${a.docsValidated&&!a.depositPaid?'<div class="notice">En attente du paiement des frais d’enregistrement par le chauffeur.</div>':''}${a.depositPaid&&!a.depositValidated?'<div class="notice warning">Le chauffeur déclare avoir payé. Vérifie la réception avant de confirmer.</div>':''}</div>`).join('')
+  box.innerHTML=list.map(a=>`<details class="compact-item"><summary><span><strong>${a.name}</strong> | Axe : ${shortAxisName(a.axis)} | Places : ${a.seats||0}</span><span class="badge ${a.active?'ok':'warn'}">${statusText(a.status)}</span></summary><div class="compact-body"><div class="facts"><div class="fact"><small>Téléphone</small><strong>${a.phone}</strong></div><div class="fact"><small>Véhicule</small><strong>${a.vehicle}</strong></div><div class="fact"><small>Plaque</small><strong>${a.plate}</strong></div><div class="fact"><small>Axe</small><strong>${a.axis}</strong></div><div class="fact"><small>Places déclarées</small><strong>${a.seats}</strong></div><div class="fact"><small>Prix axe</small><strong>${money(a.price)}</strong></div><div class="fact"><small>Frais attendus</small><strong>${money(a.deposit)}</strong></div><div class="fact"><small>Permis</small><strong>${a.licenseName||'-'}</strong></div><div class="fact"><small>Identité</small><strong>${a.idCardName||'-'}</strong></div></div><div class="actions"><button onclick="validateDriverDocuments('${a.id}')" ${a.docsValidated?'disabled':''}>Valider les documents</button><button onclick="validateDriverDeposit('${a.id}')" ${!a.depositPaid||a.depositValidated?'disabled':''}>Confirmer frais reçus</button><button class="blue" onclick="authorizeDriver('${a.id}')" ${!a.depositValidated||a.active?'disabled':''}>Autoriser à publier</button></div>${a.docsValidated&&!a.depositPaid?'<div class="notice">Documents validés. En attente du paiement des frais d’enregistrement par le chauffeur.</div>':''}${a.depositPaid&&!a.depositValidated?'<div class="notice warning">Le chauffeur déclare avoir payé. Vérifie la réception avant de confirmer.</div>':''}${a.active?'<div class="notice success">Chauffeur autorisé à publier.</div>':''}</div></details>`).join('')
 }
 async function validateDriverDocuments(id){await updateDoc(id,{status:'docs_validated',docsValidated:true,docsValidatedAt:Date.now()})}
 async function validateDriverDeposit(id){await updateDoc(id,{status:'deposit_validated',depositValidated:true,depositValidatedAt:Date.now()})}
@@ -150,9 +190,36 @@ function renderPublish(){setShell('publish',`<div class="grid two"><div class="c
 function syncPublishDriver(){const a=activeApps().find(x=>x.id===$('publishDriver').value);['publishAxis','publishVehicle','publishPlate','publishPrice','publishSeats'].forEach(id=>$(id).value='');if(!a)return;$('publishAxis').value=a.axis;$('publishVehicle').value=a.vehicle;$('publishPlate').value=a.plate;$('publishPrice').value=money(a.price);$('publishSeats').value=a.seats}
 async function publishOffer(){const a=activeApps().find(x=>x.id===$('publishDriver').value);if(!a){alert('Choisissez un chauffeur validé.');return}const day=$('publishDay').value,checkinTime=$('publishCheckin').value,time=$('publishTime').value,boarding=$('publishBoarding').value.trim(),seats=Number($('publishSeats').value||0);if(!day||!checkinTime||!time||!boarding||seats<1){alert('Complétez date, heures, embarquement et places.');return}await addDoc({type:'offer',driverAppId:a.id,driver:a.name,phone:a.phone,vehicle:a.vehicle,plate:a.plate,axis:a.axis,seats,booked:0,price:a.price,day,checkinTime,time,boarding,status:'Disponible',source:'v30'});$('publishMsg').className='notice success';$('publishMsg').textContent='Trajet publié. Il apparaît maintenant côté client et booking.';$('publishDay').value='';$('publishCheckin').value='';$('publishTime').value='';$('publishBoarding').value=''}
 function renderActiveDrivers(){const box=$('activeDriversBox');if(!box)return;const list=activeApps();box.innerHTML=list.length?list.map(a=>`<div class="item"><strong>${a.name}</strong><br>${a.axis}<br>${a.vehicle} - ${a.plate}</div>`).join(''):'<div class="notice">Aucun chauffeur actif pour le moment.</div>'}
-function renderBooking(){const all=offers();const pending=requests().filter(r=>r.status==='pending').length;const paid=requests().filter(r=>r.status==='paid').reduce((s,r)=>s+Number(r.seats||1),0);setShell('booking',`<div class="card"><h2>Booking / Disponibilités chauffeur</h2><p>Les demandes à traiter remontent ici. Le chauffeur confirme ou refuse.</p><div class="kpi"><div><b>${all.length}</b><span>trajets</span></div><div><b>${pending}</b><span>demandes</span></div><div><b>${paid}</b><span>places payées</span></div><div><b>${money(paid*taclarFee)}</b><span>TACLAR</span></div></div><div id="bookingList" class="list"></div></div>`);const box=$('bookingList');if(!all.length){box.innerHTML='<div class="notice">Aucun trajet publié.</div>';return}const sorted=[...all].sort((a,b)=>{const ap=reqsForOffer(a.id).some(r=>r.status==='pending')?1:0;const bp=reqsForOffer(b.id).some(r=>r.status==='pending')?1:0;return bp-ap||(b.createdAt||0)-(a.createdAt||0)});box.innerHTML=sorted.map(renderBookingOffer).join('')}
-function renderBookingOffer(o){const reqs=reqsForOffer(o.id).filter(r=>r.status!=='deleted');const passengerCount=reqs.filter(r=>['confirmed','paid'].includes(r.status)).reduce((s,r)=>s+Number(r.seats||1),0);const revenue=paidSeats(o)*Number(o.price||0);return `<div class="item selected"><div class="item-top"><div><div class="name">${o.driver}</div><div class="axis-name">${o.axis}</div></div><span class="badge ${freeSeats(o)<=0?'full':'ok'}">${freeSeats(o)<=0?'Complet':freeSeats(o)+' place(s) libres'}</span></div><div class="facts"><div class="fact"><small>Jour</small><strong>${o.day}</strong></div><div class="fact"><small>Enregistrement</small><strong>${o.checkinTime}</strong></div><div class="fact"><small>Départ</small><strong>${o.time}</strong></div><div class="fact"><small>Véhicule</small><strong>${o.vehicle}</strong></div><div class="fact"><small>Plaque</small><strong>${o.plate}</strong></div><div class="fact"><small>Prix / place</small><strong>${money(o.price)}</strong></div><div class="fact"><small>Nombre passagers confirmés</small><strong>${passengerCount}</strong></div><div class="fact"><small>Recette chauffeur payée</small><strong>${money(revenue)}</strong></div><div class="fact"><small>Embarquement</small><strong>${o.boarding}</strong></div><div class="fact"><small>Frais d’enregistrement chauffeur</small><strong>OK</strong></div></div><div class="list" style="margin-top:12px">${reqs.length?reqs.map(r=>renderBookingRequest(r,o)).join(''):'<div class="notice">Aucune demande pour ce trajet.</div>'}</div></div>`}
-function renderBookingRequest(r,o){const passengerList=(r.passengerNames||[r.clientName]).join(', ');return `<div class="item"><div class="item-top"><div><strong>${r.groupLeader||r.clientName}</strong><div class="muted">${r.clientPhone} · ${r.seats} place(s) · ${r.requestCode||''} · ${r.createdLabel||''}</div><div>${passengerList}</div></div><span class="badge ${r.status==='paid'?'ok':r.status==='pending'?'warn':'full'}">${statusText(r.status)}</span></div>${r.status==='paid'?`<div class="notice success">Commission TACLAR payée. Rendez-vous le ${o.day} à ${o.checkinTime} au point d'embarquement : ${o.boarding}. Départ prévu : ${o.time}.</div>`:''}<div class="actions"><button onclick="updateDoc('${r.id}',{status:'confirmed'})" ${r.status!=='pending'?'disabled':''}>Confirmer place</button><button class="ghost" onclick="updateDoc('${r.id}',{status:'refused'})" ${r.status!=='pending'?'disabled':''}>Refuser</button><button class="red" onclick="deleteDocHard('${r.id}')" ${r.status==='paid'?'disabled':''}>Supprimer erreur</button></div></div>`}
+function renderBooking(){
+  const all=offers();
+  setShell('booking',`<div class="card"><h2>Booking / Disponibilités chauffeur</h2><p>Liste des chauffeurs et des disponibilités publiées. Les demandes à traiter restent en haut.</p><div id="bookingList" class="compact-list"></div></div>`);
+  const box=$('bookingList');
+  if(!all.length){box.innerHTML='<div class="notice">Aucune disponibilité publiée.</div>';return}
+  const sorted=[...all].sort((a,b)=>offerPriority(a)-offerPriority(b)||(b.updatedAt||b.createdAt||0)-(a.updatedAt||a.createdAt||0));
+  box.innerHTML=sorted.map(renderBookingOffer).join('')
+}
+function renderBookingOffer(o){
+  const reqs=reqsForOffer(o.id).filter(r=>r.status!=='deleted').sort((a,b)=>requestPriorityStatus(a.status)-requestPriorityStatus(b.status)||(b.updatedAt||b.createdAt||0)-(a.updatedAt||a.createdAt||0));
+  const passengerCount=reqs.filter(r=>['confirmed','payment_pending','paid'].includes(r.status)).reduce((s,r)=>s+Number(r.seats||1),0);
+  const open=reqs.some(r=>['pending','payment_pending','confirmed'].includes(r.status))?' open':'';
+  return `<details class="compact-item booking-compact"${open}><summary><span><strong>${activeRequestSummary(o)}</strong><small>${formatDateFr(o.day)} · ${o.checkinTime} → ${o.time}</small></span><span class="badge ${freeSeats(o)<=0?'full':'ok'}">${freeSeats(o)<=0?'Complet':freeSeats(o)+' libre(s)'}</span></summary><div class="compact-body"><div class="facts"><div class="fact"><small>Jour</small><strong>${formatDateFr(o.day)}</strong></div><div class="fact"><small>Enregistrement</small><strong>${o.checkinTime}</strong></div><div class="fact"><small>Départ</small><strong>${o.time}</strong></div><div class="fact"><small>Véhicule</small><strong>${o.vehicle}</strong></div><div class="fact"><small>Plaque</small><strong>${o.plate}</strong></div><div class="fact"><small>Prix / place</small><strong>${money(o.price)}</strong></div><div class="fact"><small>Passagers confirmés</small><strong>${passengerCount}</strong></div><div class="fact"><small>Embarquement</small><strong>${o.boarding}</strong></div></div><div class="list" style="margin-top:12px">${reqs.length?reqs.map(r=>renderBookingRequest(r,o)).join(''):'<div class="notice">Aucune demande pour cette disponibilité.</div>'}</div></div></details>`
+}
+function renderBookingRequest(r,o){
+  const passengerList=(r.passengerNames&&r.passengerNames.length?r.passengerNames:[r.clientName]).join(', ');
+  const statusClass=r.status==='paid'?'ok':(['pending','confirmed','payment_pending'].includes(r.status)?'warn':'full');
+  let message='';
+  if(r.status==='confirmed') message='<div class="notice success">Places confirmées. Le client doit maintenant payer les frais TACLAR.</div>';
+  if(r.status==='payment_pending') message='<div class="notice warning">Le client a déclaré le paiement des frais TACLAR. TACLAR doit confirmer la réception Airtel Money avant de débloquer les informations finales.</div>';
+  if(r.status==='paid') message=`<div class="notice success">Paiement TACLAR confirmé. Rendez-vous le ${formatDateFr(o.day)} à ${o.checkinTime} au point d'embarquement : ${o.boarding}. Départ prévu : ${o.time}.</div>`;
+  const actions=[];
+  if(r.status==='pending'){
+    actions.push(`<button onclick="updateDoc('${r.id}',{status:'confirmed',confirmedAt:Date.now()})">Confirmer place</button>`);
+    actions.push(`<button class="ghost" onclick="updateDoc('${r.id}',{status:'refused'})">Refuser</button>`);
+  }
+  if(r.status==='payment_pending') actions.push(`<button class="green" onclick="updateDoc('${r.id}',{status:'paid',paidAt:Date.now(),paymentConfirmedAt:Date.now()})">Confirmer paiement reçu</button>`);
+  if(r.status!=='paid') actions.push(`<button class="red" onclick="deleteDocHard('${r.id}')">Supprimer erreur</button>`);
+  return `<div class="item booking-request"><div class="item-top"><div><strong>${r.groupLeader||r.clientName}</strong><div class="muted">${r.clientPhone} · ${r.seats} place(s) · ${r.requestCode||''} · ${r.createdLabel||''}</div><div>${passengerList}</div></div><span class="badge ${statusClass}">${statusText(r.status)}</span></div>${message}<div class="actions">${actions.join('')}</div></div>`
+}
 
 function vehicleVisual(o){
   if(o.vehiclePhotoUrl){return `<img class="vehicle-photo-img" src="${o.vehiclePhotoUrl}" alt="Photo véhicule">`}
@@ -209,13 +276,16 @@ async function payConfirmedRequest(requestId){
   const count=Math.max(1,Number(r.seats||1));
   const names=Array.from({length:count},(_,i)=>(document.getElementById(`payPassenger_${requestId}_${i}`)?.value||'').trim());
   if(names.some(n=>!n)){alert('Merci de renseigner le nom de chaque passager avant le paiement TACLAR.');return}
-  await updateDoc(requestId,{status:'paid',paidAt:Date.now(),passengerNames:names,passengerNamesPending:false});
+  await updateDoc(requestId,{status:'payment_pending',paymentDeclaredAt:Date.now(),passengerNames:names,passengerNamesPending:false});
+  alert('Paiement déclaré. TACLAR doit maintenant confirmer la réception du paiement avant de débloquer les informations finales.');
 }
 function renderPayments(){
   const toPay=requests().filter(r=>r.status==='confirmed');
-  $('toPayBox').innerHTML=toPay.length?toPay.map(r=>{const o=offers().find(x=>x.id===r.offerId)||{};return `<div class="item"><strong>${r.groupLeader||r.clientName}</strong><div>${r.seats} place(s) confirmée(s) avec ${o.driver||'-'}</div><div class="notice success">Le chauffeur a confirmé la disponibilité. Complète les noms des passagers avant le paiement des frais TACLAR.</div><div class="field-grid">${passengerInputsForRequest(r)}</div><div class="row"><span>Total frais TACLAR</span><strong>${money(Number(r.seats||1)*taclarFee)}</strong></div><button class="orange" onclick="payConfirmedRequest('${r.id}')">Payer les frais TACLAR</button></div>`}).join(''):'<div class="notice">Aucune place confirmée en attente de paiement.</div>';
+  const pendingPayment=requests().filter(r=>r.status==='payment_pending').sort((a,b)=>(b.paymentDeclaredAt||0)-(a.paymentDeclaredAt||0));
+  $('toPayBox').innerHTML=(toPay.length?toPay.map(r=>{const o=offers().find(x=>x.id===r.offerId)||{};return `<div class="item"><strong>${r.groupLeader||r.clientName}</strong><div>${r.seats} place(s) confirmée(s) avec ${o.driver||'-'}</div><div class="notice success">Le chauffeur a confirmé la disponibilité. Complète les noms des passagers avant le paiement des frais TACLAR.</div><div class="field-grid">${passengerInputsForRequest(r)}</div><div class="row"><span>Total frais TACLAR</span><strong>${money(Number(r.seats||1)*taclarFee)}</strong></div><button class="orange" onclick="payConfirmedRequest('${r.id}')">Payer / déclarer les frais TACLAR</button></div>`}).join(''):'<div class="notice">Aucune place confirmée en attente de paiement.</div>')+
+  (pendingPayment.length?`<h3 style="margin-top:14px">Paiements déclarés</h3>`+pendingPayment.map(r=>{const o=offers().find(x=>x.id===r.offerId)||{};return `<div class="item"><strong>${r.groupLeader||r.clientName}</strong><div>${r.seats} place(s) avec ${o.driver||'-'}</div><div class="notice warning">Paiement déclaré. TACLAR doit confirmer la réception Airtel Money. Les places restent bloquées pendant la vérification.</div></div>`}).join(''):'');
   const paid=requests().filter(r=>r.status==='paid').sort((a,b)=>(b.paidAt||0)-(a.paidAt||0));
-  $('paidBox').innerHTML=paid.length?paid.map(r=>{const o=offers().find(x=>x.id===r.offerId)||{};return `<div class="item"><strong>Reçu ${r.paymentMode==='group'?'groupe':'individuel'}</strong><div class="row"><span>Responsable</span><strong>${r.groupLeader||r.clientName}</strong></div><div class="row"><span>Passagers</span><strong>${(r.passengerNames||[]).join(', ')}</strong></div><div class="row"><span>Axe</span><strong>${o.axis||'-'}</strong></div><div class="row"><span>Chauffeur</span><strong>${o.driver||'-'}</strong></div><div class="row"><span>Téléphone chauffeur</span><strong>${o.phone||'-'}</strong></div><div class="row"><span>Enregistrement</span><strong>${o.checkinTime||'-'}</strong></div><div class="row"><span>Départ</span><strong>${o.time||'-'}</strong></div><div class="row"><span>Embarquement</span><strong>${o.boarding||'-'}</strong></div><div class="row"><span>Total frais TACLAR</span><strong>${money(Number(r.seats||1)*taclarFee)}</strong></div><button class="blue" onclick="window.print()">Télécharger / imprimer le reçu</button></div>`}).join(''):'<div class="notice">Les informations complètes du chauffeur apparaissent ici après paiement.</div>'
+  $('paidBox').innerHTML=paid.length?paid.map(r=>{const o=offers().find(x=>x.id===r.offerId)||{};return `<div class="item"><strong>Reçu ${r.paymentMode==='group'?'groupe':'individuel'}</strong><div class="row"><span>Responsable</span><strong>${r.groupLeader||r.clientName}</strong></div><div class="row"><span>Passagers</span><strong>${(r.passengerNames||[]).join(', ')}</strong></div><div class="row"><span>Axe</span><strong>${o.axis||'-'}</strong></div><div class="row"><span>Chauffeur</span><strong>${o.driver||'-'}</strong></div><div class="row"><span>Téléphone chauffeur</span><strong>${o.phone||'-'}</strong></div><div class="row"><span>Enregistrement</span><strong>${o.checkinTime||'-'}</strong></div><div class="row"><span>Départ</span><strong>${o.time||'-'}</strong></div><div class="row"><span>Embarquement</span><strong>${o.boarding||'-'}</strong></div><div class="row"><span>Total frais TACLAR</span><strong>${money(Number(r.seats||1)*taclarFee)}</strong></div><button class="blue" onclick="window.print()">Télécharger / imprimer le reçu</button></div>`}).join(''):'<div class="notice">Les informations complètes du chauffeur apparaissent ici après confirmation du paiement par TACLAR.</div>'
 }
 
 document.addEventListener('DOMContentLoaded',initFirebase);
