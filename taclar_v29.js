@@ -58,6 +58,21 @@ function whatsappLink(phone,text){const digits=String(phone||'').replace(/\D/g,'
 function statusText(s){return {submitted:'Documents en cours de traitement',docs_validated:'Documents approuvés - caution à déposer',deposit_paid:'Caution déposée - vérification TACLAR',deposit_validated:'Caution reçue - autorisation en attente',active:'Autorisé à publier',pending:'Demande envoyée',confirmed:'Confirmée chauffeur - frais TACLAR à payer',payment_declared:'Paiement déclaré - validation TACLAR',paid:'Commission TACLAR payée',refused:'Refusée',deleted:'Supprimée'}[s]||s||'-'}
 function fillAxisSelect(sel,empty='-- Choisir un axe --'){if(!sel)return;const v=sel.value;sel.innerHTML=`<option value="">${empty}</option>`+axes.map(a=>`<option value="${a}">${a}</option>`).join('');if(axes.includes(v))sel.value=v}
 function fillTimeSelect(sel,empty='-- Choisir --'){if(!sel)return;const v=sel.value;sel.innerHTML=`<option value="">${empty}</option>`+departureTimes.map(t=>`<option value="${t}">${t}</option>`).join('');if(departureTimes.includes(v))sel.value=v}
+function dateFromISO(value){const p=String(value||'').split('-').map(Number);return p.length===3?new Date(p[0],p[1]-1,p[2]):null}
+function dateToISO(date){return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`}
+function addMonths(date,count){const d=new Date(date);d.setMonth(d.getMonth()+count);return d}
+function generateDepartureDates(startISO,mode,weekdays,months){
+  const start=dateFromISO(startISO);
+  if(!start)return [];
+  if(mode==='single')return [startISO];
+  const end=addMonths(start,Math.max(1,Math.min(2,Number(months||1))));
+  const selected=mode==='weekly'?[start.getDay()]:weekdays.map(Number);
+  const dates=[];
+  for(let d=new Date(start);d<end;d.setDate(d.getDate()+1)){
+    if(selected.includes(d.getDay()))dates.push(dateToISO(d));
+  }
+  return dates.slice(0,40);
+}
 async function addDoc(data){if(!db)throw new Error('Firebase non connecté');return db.collection(collectionName).add({...data,createdAt:Date.now(),updatedAt:Date.now()})}
 async function updateDoc(id,data){if(!db)throw new Error('Firebase non connecté');return db.collection(collectionName).doc(id).set({...data,updatedAt:Date.now()},{merge:true})}
 async function deleteDocHard(id){if(!db)throw new Error('Firebase non connecté');return db.collection(collectionName).doc(id).delete()}
@@ -132,10 +147,25 @@ function renderDriverDashboard(a){
   else if(a.active)message='Ton dossier est complet. Tu peux publier un trajet depuis ton espace chauffeur.';
   const requestCount=driverRequestCount(a.id);
   setShell('new',`<div class="card driver-space"><div class="item-top"><div><h2>Espace chauffeur</h2><p class="muted">Bienvenue, <strong>${a.name}</strong>.</p></div><span class="badge ${a.active?'ok':'warn'}">${statusText(a.status)}</span></div><details class="driver-section status-${a.status}" open><summary>Suivi de mon dossier</summary><div class="credentials"><div><small>Numéro de dossier</small><strong>${a.driverCode||'Ancien dossier'}</strong></div><div><small>Code PIN personnel</small><strong>${a.pin||'Non défini'}</strong></div></div><div class="notice warning"><strong>À conserver :</strong> note ton numéro de dossier et ton code PIN pour te reconnecter depuis un autre téléphone.</div><div class="timeline">${steps.map(s=>`<div class="${s.done?'done':''}"><span>${s.done?'✓':'○'}</span><strong>${s.label}</strong></div>`).join('')}</div><div class="notice ${a.active?'success':''}">${message}</div><div class="facts"><div class="fact"><small>Nom</small><strong>${a.name}</strong></div><div class="fact"><small>Téléphone</small><strong>${a.phone}</strong></div><div class="fact"><small>Véhicule</small><strong>${a.vehicle}</strong></div><div class="fact"><small>Plaque</small><strong>${a.plate}</strong></div><div class="fact"><small>Axe souhaité</small><strong>${a.axis}</strong></div><div class="fact"><small>Places déclarées</small><strong>${a.seats}</strong></div><div class="fact"><small>Caution</small><strong>${money(a.deposit)}</strong></div><div class="fact"><small>Statut</small><strong>${statusText(a.status)}</strong></div></div>${a.docsValidated&&!a.depositPaid?`<div class="actions"><button class="orange" onclick="driverPayDeposit('${a.id}')">Déposer la caution</button></div>`:''}</details>${a.active?`<details class="driver-section is-active"><summary>Publier mon trajet</summary>${driverPublishPanel(a)}</details><details class="driver-section ${requestCount?'has-work':''}" ${requestCount?'open':''}><summary>Demandes de courses (${requestCount})</summary>${driverRequestsPanel(a)}</details>`:''}<div class="actions driver-logout"><button class="secondary" onclick="logoutDriver()">Se déconnecter</button></div></div>`);
-  if(a.active){fillTimeSelect($('driverPublishCheckin'),'-- Heure enregistrement --');fillTimeSelect($('driverPublishTime'),'-- Heure départ --')}
+  if(a.active){fillTimeSelect($('driverPublishCheckin'),'-- Heure enregistrement --');fillTimeSelect($('driverPublishTime'),'-- Heure départ --');syncDriverRecurrenceFields()}
 }
 function driverPublishPanel(a){
-  return `<section class="driver-publish-panel"><p>Complète uniquement les informations de départ. Les informations chauffeur sont déjà reprises depuis ton dossier validé.</p><div class="field-grid"><div><label>Axe</label><input value="${a.axis}" disabled></div><div><label>Véhicule</label><input value="${a.vehicle}" disabled></div><div><label>Plaque</label><input value="${a.plate}" disabled></div><div><label>Prix transport / place</label><input value="${money(a.price)}" disabled></div><div><label>Places disponibles</label><input id="driverPublishSeats" type="number" min="1" max="${a.seats}" value="${a.seats}"></div><div><label>Date de départ</label><input id="driverPublishDay" type="date"></div><div><label>Heure d'enregistrement</label><select id="driverPublishCheckin"></select></div><div><label>Heure de départ</label><select id="driverPublishTime"></select></div><div class="full"><label>Point d'embarquement</label><input id="driverPublishBoarding" placeholder="Ex : Gare routière"></div></div><div class="actions"><button onclick="publishDriverTrip('${a.id}')">Publier le trajet</button></div><div id="driverPublishMsg" class="notice hidden"></div></section>`
+  return `<section class="driver-publish-panel"><p>Complète uniquement les informations de départ. Les informations chauffeur sont déjà reprises depuis ton dossier validé.</p><div class="field-grid"><div><label>Axe</label><input value="${a.axis}" disabled></div><div><label>Véhicule</label><input value="${a.vehicle}" disabled></div><div><label>Plaque</label><input value="${a.plate}" disabled></div><div><label>Prix transport / place</label><input value="${money(a.price)}" disabled></div><div><label>Places disponibles</label><input id="driverPublishSeats" type="number" min="1" max="${a.seats}" value="${a.seats}"></div><div><label>Date de départ / début</label><input id="driverPublishDay" type="date" onchange="syncDriverRecurrenceFields()"></div><div><label>Type de départ</label><select id="driverPublishMode" onchange="syncDriverRecurrenceFields()"><option value="single">Départ unique</option><option value="weekly">Une fois par semaine</option><option value="multi">Plusieurs jours par semaine</option></select></div><div id="driverPublishPeriodWrap" class="hidden"><label>Période de publication</label><select id="driverPublishPeriod" onchange="syncDriverRecurrenceFields()"><option value="1">1 mois</option><option value="2">2 mois maximum</option></select></div><div id="driverPublishWeekdaysWrap" class="full hidden"><label>Jours de départ</label><div class="weekday-grid">${[['1','Lundi'],['2','Mardi'],['3','Mercredi'],['4','Jeudi'],['5','Vendredi'],['6','Samedi'],['0','Dimanche']].map(([v,l])=>`<label><input type="checkbox" class="driverWeekday" value="${v}" onchange="syncDriverRecurrenceFields()"> ${l}</label>`).join('')}</div></div><div><label>Heure d'enregistrement</label><select id="driverPublishCheckin"></select></div><div><label>Heure de départ</label><select id="driverPublishTime"></select></div><div class="full"><label>Point d'embarquement</label><input id="driverPublishBoarding" placeholder="Ex : Gare routière"></div></div><div id="driverPublishPreview" class="notice">Départ unique : une disponibilité sera créée.</div><div class="actions"><button onclick="publishDriverTrip('${a.id}')">Publier le trajet</button></div><div id="driverPublishMsg" class="notice hidden"></div></section>`
+}
+function syncDriverRecurrenceFields(){
+  const mode=$('driverPublishMode')?.value||'single';
+  const start=$('driverPublishDay')?.value||'';
+  $('driverPublishPeriodWrap')?.classList.toggle('hidden',mode==='single');
+  $('driverPublishWeekdaysWrap')?.classList.toggle('hidden',mode!=='multi');
+  const weekdays=[...document.querySelectorAll('.driverWeekday:checked')].map(i=>i.value);
+  const period=$('driverPublishPeriod')?.value||1;
+  const dates=generateDepartureDates(start,mode,weekdays,period);
+  const preview=$('driverPublishPreview');
+  if(!preview)return;
+  if(mode==='single')preview.textContent='Départ unique : une disponibilité sera créée.';
+  else if(!start)preview.textContent='Choisis la date de début pour calculer les départs.';
+  else if(mode==='multi'&&!weekdays.length)preview.textContent='Choisis au moins un jour de départ.';
+  else preview.textContent=`${dates.length} disponibilité(s) seront créées entre le ${start} et ${dates[dates.length-1]||start}.`;
 }
 function driverRequestsPanel(a){
   const myOffers=offers().filter(o=>o.driverAppId===a.id);
@@ -157,13 +187,22 @@ function renderDriverRequest(r,o){
 async function publishDriverTrip(appId){
   const a=apps().find(x=>x.id===appId&&x.active);
   if(!a){alert('Dossier chauffeur non autorisé à publier.');return}
-  const day=$('driverPublishDay').value,checkinTime=$('driverPublishCheckin').value,time=$('driverPublishTime').value,boarding=$('driverPublishBoarding').value.trim(),seats=Number($('driverPublishSeats').value||0);
+  const day=$('driverPublishDay').value,checkinTime=$('driverPublishCheckin').value,time=$('driverPublishTime').value,boarding=$('driverPublishBoarding').value.trim(),seats=Number($('driverPublishSeats').value||0),mode=$('driverPublishMode')?.value||'single',period=$('driverPublishPeriod')?.value||1,weekdays=[...document.querySelectorAll('.driverWeekday:checked')].map(i=>i.value);
   if(!day||!checkinTime||!time||!boarding||seats<1){alert('Complète date, heures, point d’embarquement et places.');return}
+  if(mode==='multi'&&!weekdays.length){alert('Choisis au moins un jour de départ pour une publication répétée.');return}
   if(timeMinutes(checkinTime)>=timeMinutes(time)){alert("Erreur d'heure : l'heure d'enregistrement doit être avant l'heure de départ.");return}
-  await addDoc({type:'offer',driverAppId:a.id,driver:a.name,phone:a.phone,vehicle:a.vehicle,plate:a.plate,axis:a.axis,seats,booked:0,price:a.price,day,checkinTime,time,boarding,status:'Disponible',source:'driver-space'});
+  const dates=generateDepartureDates(day,mode,weekdays,period);
+  if(!dates.length){alert('Aucune date de départ générée. Vérifie la date et les jours choisis.');return}
+  if(dates.length>12&&!confirm(`${dates.length} disponibilités vont être créées. Continuer ?`))return;
+  for(const d of dates){
+    await addDoc({type:'offer',driverAppId:a.id,driver:a.name,phone:a.phone,vehicle:a.vehicle,plate:a.plate,axis:a.axis,seats,booked:0,price:a.price,day:d,checkinTime,time,boarding,status:'Disponible',source:'driver-space',recurrenceMode:mode,recurrenceStart:day,recurrenceMonths:Number(period||1)});
+  }
   $('driverPublishMsg').className='notice success';
-  $('driverPublishMsg').textContent='Trajet publié. Il apparaît maintenant dans les disponibilités et côté client.';
+  $('driverPublishMsg').textContent=dates.length===1?'Trajet publié. Il apparaît maintenant dans les disponibilités et côté client.':`${dates.length} disponibilités publiées. Elles apparaissent maintenant dans Booking et côté client.`;
   $('driverPublishDay').value='';$('driverPublishCheckin').value='';$('driverPublishTime').value='';$('driverPublishBoarding').value='';
+  document.querySelectorAll('.driverWeekday').forEach(i=>i.checked=false);
+  $('driverPublishMode').value='single';
+  syncDriverRecurrenceFields();
 }
 async function driverPayDeposit(id){if(!confirm('Confirmer que la caution a été envoyée à TACLAR ?'))return;await updateDoc(id,{status:'deposit_paid',depositPaid:true,depositPaidAt:Date.now()})}
 function logoutDriver(){clearDriverSession();renderPage()}

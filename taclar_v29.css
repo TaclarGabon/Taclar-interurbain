@@ -4,6 +4,10 @@
 @media(max-width:850px){.logo{width:68px!important;height:54px!important;font-size:13px!important}}
 .actions select{width:auto;min-width:190px;max-width:100%}
 .field-grid .full{grid-column:1/-1}
+.weekday-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:6px}
+.weekday-grid label{border:1px solid var(--line);border-radius:12px;padding:10px;background:#f8fafc;margin:0}
+.weekday-grid input{width:auto;margin-right:6px}
+@media(max-width:720px){.weekday-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .driver-publish-panel,.driver-requests-panel{margin-top:18px;border-top:1px solid var(--line);padding-top:18px}
 .driver-publish-panel .actions button{min-width:220px}
 .driver-logout{justify-content:flex-end;border-top:1px solid var(--line);padding-top:14px}
