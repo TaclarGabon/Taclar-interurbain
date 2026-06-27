@@ -21,6 +21,7 @@
 .booking-free{background:#ecfdf5!important;border-color:#16a34a!important}
 .booking-complete{background:#fdf2f8!important;border-color:#f9a8d4!important}
 .booking-pending{background:#fff7ed!important;border-color:#fdba74!important}
+.booking-cancelled{background:#fef2f2!important;border-color:#fca5a5!important}
 .driver-section.is-active{background:#ecfdf5;border-color:#86efac}
 .driver-section.has-work{background:#fff7ed;border-color:#fdba74}
 .receipt-card{break-inside:avoid}
