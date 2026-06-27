@@ -7,6 +7,10 @@
 .driver-publish-panel,.driver-requests-panel{margin-top:18px;border-top:1px solid var(--line);padding-top:18px}
 .driver-publish-panel .actions button{min-width:220px}
 .driver-logout{justify-content:flex-end;border-top:1px solid var(--line);padding-top:14px}
+.driver-section{border:1px solid var(--line);border-radius:14px;padding:14px;margin-top:14px;background:#fbfdff}
+.driver-section>summary{cursor:pointer;font-weight:900;font-size:18px;line-height:1.35}
+.driver-section[open]>summary{margin-bottom:12px}
+.driver-section .driver-publish-panel,.driver-section .driver-requests-panel{border-top:0;margin-top:0;padding-top:0}
 .compact-item summary{cursor:pointer;font-weight:900;line-height:1.35}
 .compact-item[open] summary{margin-bottom:10px}
 .booking-facts{grid-template-columns:repeat(3,minmax(0,1fr))}
