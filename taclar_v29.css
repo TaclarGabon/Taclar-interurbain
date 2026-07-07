@@ -67,3 +67,9 @@ body:not(.printing-receipt){
 .hero{
   box-shadow:0 18px 56px rgba(12,23,41,.18);
 }
+
+
+/* V50 - Ajouts fonctionnels uniquement : ne modifie pas l'interface principale */
+.status-payment_not_received,.status-expired{background:#fef2f2!important;border-color:#fca5a5!important}
+.payment-timer{border-left:4px solid var(--orange);font-weight:700}
+.payment-timer strong{color:#92400e}
