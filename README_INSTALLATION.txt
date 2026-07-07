@@ -1,27 +1,12 @@
-TACLAR Interurbain V50 - Correctif seulement
+TACLAR Interurbain V50 - Interface V46 gardee
 
-IMPORTANT : ne remplace pas les pages HTML et ne touche pas aux images.
-Conserver tous les fichiers actuels du projet, notamment :
-- index.html
-- taclar_booking.html
-- taclar_client.html
-- taclar_validation.html
-- taclar_publier_trajet.html
-- taclar_nouveau_chauffeur.html
-- hero-taclar-user-phone.png
-- firebase-config.js
+Cette version conserve la previsualisation officielle avec le monsieur au telephone comme page d'accueil.
 
-À remplacer uniquement :
-1) taclar_v29.js
-2) taclar_v29.css
+Fichiers a remplacer sur GitHub :
+1) index.html  -> remet exactement l'interface/previsualisation V46 souhaitee
+2) taclar_v29.js -> ajoute la logique V50 : minuteur, paiement non recu, expiration, liberation des places, historique
+3) taclar_v29.css -> ajoute seulement les styles V50 necessaires, sans changer l'identite visuelle
 
-Ajouts V50 :
-- délai de paiement de 15 minutes après confirmation du chauffeur ;
-- blocage temporaire des places pendant ce délai ;
-- expiration automatique si le client ne déclare pas le paiement dans le délai ;
-- bouton Validation TACLAR : Paiement non reçu ;
-- libération automatique des places si paiement non reçu ou délai expiré ;
-- affichage du compte à rebours côté client/chauffeur ;
-- export CSV de l’historique depuis la page Validation TACLAR.
+Les autres pages HTML sont incluses pour reference, mais elles restent structurellement identiques : elles chargent taclar_v29.css et taclar_v29.js.
 
-Note : le design, le fond et l’image du monsieur avec le téléphone restent inchangés, car les pages HTML ne sont pas remplacées.
+Important : ne pas remplacer index.html par une page prototype. Toujours garder cette previsualisation comme portail principal pour V50, V51, V52, etc.
