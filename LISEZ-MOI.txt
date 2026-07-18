@@ -1,9 +1,11 @@
-TACLAR Interurbain V47 - correction des champs qui s'effacent
+TACLAR Interurbain V47 - correction définitive des champs de saisie
 
 Remplacer uniquement le fichier taclar_v29.js sur GitHub.
-Ne pas modifier les fichiers HTML, CSS, l'image de fond ni firebase-config.js.
+Ne pas modifier les fichiers HTML, CSS, Firebase ni l'image de fond.
 
 Correction :
-- la synchronisation Firebase ne reconstruit plus la page pendant la saisie ;
-- les données saisies restent visibles sur téléphone et ordinateur ;
-- suppression de la remise à zéro du suivi client à chaque caractère tapé.
+- la page Client n'est plus reconstruite lors des synchronisations Firebase ;
+- seuls les résultats chauffeurs et le suivi des réservations sont actualisés ;
+- le nom, le téléphone et les autres champs restent saisis sans limite de temps.
+
+Après remplacement sur GitHub, attendre la publication puis forcer l'actualisation du navigateur.

@@ -91,18 +91,29 @@ async function resetTestData(){
   selectedOfferId=null;
   alert('Base de test réinitialisée. Tu peux créer un vrai chauffeur et un vrai client.');
 }
-let pendingFirebaseRender=false;
-function isEditingForm(){
-  const el=document.activeElement;
-  return !!el&&['INPUT','TEXTAREA','SELECT'].includes(el.tagName)&&!el.disabled&&!el.readOnly;
+function refreshPageDataWithoutReset(){
+  const page=document.body.dataset.page;
+  if(page==='client'){
+    // Ne jamais reconstruire le formulaire client après le premier affichage.
+    // On actualise uniquement les zones dynamiques afin de conserver toutes les saisies.
+    if($('clientOffers'))renderClientOffers();
+    if($('toPayBox')&&$('paidBox'))renderPayments();
+    return;
+  }
+  if(page==='booking'){
+    renderBooking();
+    return;
+  }
+  if(page==='validation'){
+    if($('applicationsList'))renderApplicationsList();else renderValidation();
+    return;
+  }
+  // Pour les autres pages, ne pas reconstruire un formulaire pendant une saisie.
+  const active=document.activeElement;
+  const editing=active&&['INPUT','TEXTAREA','SELECT'].includes(active.tagName)&&!active.disabled&&!active.readOnly;
+  if(!editing)renderPage();
 }
-function renderAfterEditing(){
-  if(!pendingFirebaseRender||isEditingForm())return;
-  pendingFirebaseRender=false;
-  renderPage();
-}
-function initFirebase(){const cfg=window.TACLAR_FIREBASE_CONFIG;if(!cfg||String(cfg.apiKey||'').includes('COLLER_')){showLoad('Firebase non configuré');return}firebase.initializeApp(cfg);db=firebase.firestore();showLoad('Connexion Firebase...');db.collection(collectionName).onSnapshot(snap=>{docs=snap.docs.map(d=>({id:d.id,...d.data()}));const firstRender=!ready;ready=true;showLoad('Synchronisé');setTimeout(()=>showLoad(''),900);if(firstRender||!isEditingForm()){pendingFirebaseRender=false;renderPage()}else{pendingFirebaseRender=true}},err=>{showLoad('Erreur Firebase: '+err.message)})}
-document.addEventListener('focusout',()=>setTimeout(renderAfterEditing,0));
+function initFirebase(){const cfg=window.TACLAR_FIREBASE_CONFIG;if(!cfg||String(cfg.apiKey||'').includes('COLLER_')){showLoad('Firebase non configuré');return}firebase.initializeApp(cfg);db=firebase.firestore();showLoad('Connexion Firebase...');db.collection(collectionName).onSnapshot(snap=>{docs=snap.docs.map(d=>({id:d.id,...d.data()}));const firstRender=!ready;ready=true;showLoad('Synchronisé');setTimeout(()=>showLoad(''),900);if(firstRender)renderPage();else refreshPageDataWithoutReset()},err=>{showLoad('Erreur Firebase: '+err.message)})}
 function showLoad(txt){let el=$('syncStatus');if(!el){el=document.createElement('div');el.id='syncStatus';el.className='loading';document.body.appendChild(el)}el.textContent=txt;el.style.display=txt?'block':'none'}
 function header(active){
   const pageTitles={
@@ -280,7 +291,7 @@ async function refuseRequest(id,reasonId){
   }
   await updateDoc(id,{status:'refused',refusalReason:reason,refusedAt:Date.now(),clientMessage:`Demande non acceptée : ${reason}`});
 }
-function renderClient(){setShell('client',`<div class="grid two"><div class="card"><h2>Réservation client</h2><p>Le client choisit un axe et une date, puis sélectionne un chauffeur disponible.</p><div class="field-grid"><div><label>Axe recherché</label><select id="clientAxis"></select></div><div><label>Date souhaitée</label><input id="clientDay" type="date"></div><div><label>Mode de paiement TACLAR</label><select id="paymentMode"><option value="single">Individuel - une place</option><option value="group">Groupe/famille - plusieurs places</option></select></div><div><label>Nom du client / responsable</label><input id="clientName" placeholder="Ex : Arielle Mba"></div><div><label>Téléphone responsable</label><input id="clientPhone" placeholder="Ex : +241 66 12 34 56"></div><div id="groupSeatsWrap" class="hidden"><label>Nombre de places à réserver</label><input id="groupSeats" type="text" inputmode="numeric" pattern="[0-9]*" value="2"></div></div><div id="groupNamesWrap" class="hidden"><label>Noms des passagers du groupe</label><div id="groupNames"></div></div><div id="clientOffers" class="list" style="margin-top:12px"></div></div><div class="card"><h2>Suivi client</h2><div class="notice"><div class="row"><span>Frais TACLAR</span><strong>${money(taclarFee)} / place</strong></div><div class="row"><span>Transport</span><strong>Payé au chauffeur</strong></div><div class="row"><span>Infos complètes</span><strong>Après paiement TACLAR</strong></div></div><div class="client-lookup"><h3>Retrouver ma réservation</h3><label>Référence TACLAR</label><input id="lookupCode" placeholder="Ex : TAC-7824-6391"><label style="margin-top:8px">Téléphone</label><input id="lookupPhone" placeholder="Ex : 78 24 58 10"><button class="secondary" id="lookupBtn" type="button">Retrouver</button><div id="lookupMsg" class="notice hidden"></div></div><div id="toPayBox" class="list"></div><h3 style="margin-top:14px">Mes réservations payées</h3><div id="paidBox" class="list"></div></div></div>`);fillAxisSelect($('clientAxis'));const params=new URLSearchParams(location.search);const presetAxis=params.get('axis')||'';const presetDay=params.get('day')||'';const presetOffer=params.get('offer')||'';const presetSeats=Number(params.get('seats')||1);if(presetAxis&&axes.includes(presetAxis))$('clientAxis').value=presetAxis;if(presetDay)$('clientDay').value=presetDay;if(presetOffer)selectedOfferId=presetOffer;if(presetSeats>1){$('paymentMode').value='group';$('groupSeats').value=presetSeats}const resetClient=()=>{clearClientSession();renderPayments()};$('clientAxis').onchange=()=>{resetClient();renderClientOffers()};$('clientDay').onchange=()=>{resetClient();renderClientOffers()};$('paymentMode').onchange=()=>{syncGroupFields();renderClientOffers()};$('groupSeats').oninput=renderGroupNameInputs;$('lookupBtn').onclick=lookupClientReservation;syncGroupFields();renderClientOffers();renderPayments()}
+function renderClient(){setShell('client',`<div class="grid two"><div class="card"><h2>Réservation client</h2><p>Le client choisit un axe et une date, puis sélectionne un chauffeur disponible.</p><div class="field-grid"><div><label>Axe recherché</label><select id="clientAxis"></select></div><div><label>Date souhaitée</label><input id="clientDay" type="date"></div><div><label>Mode de paiement TACLAR</label><select id="paymentMode"><option value="single">Individuel - une place</option><option value="group">Groupe/famille - plusieurs places</option></select></div><div><label>Nom du client / responsable</label><input id="clientName" placeholder="Ex : Arielle Mba"></div><div><label>Téléphone responsable</label><input id="clientPhone" placeholder="Ex : +241 66 12 34 56"></div><div id="groupSeatsWrap" class="hidden"><label>Nombre de places à réserver</label><input id="groupSeats" type="text" inputmode="numeric" pattern="[0-9]*" value="2"></div></div><div id="groupNamesWrap" class="hidden"><label>Noms des passagers du groupe</label><div id="groupNames"></div></div><div id="clientOffers" class="list" style="margin-top:12px"></div></div><div class="card"><h2>Suivi client</h2><div class="notice"><div class="row"><span>Frais TACLAR</span><strong>${money(taclarFee)} / place</strong></div><div class="row"><span>Transport</span><strong>Payé au chauffeur</strong></div><div class="row"><span>Infos complètes</span><strong>Après paiement TACLAR</strong></div></div><div class="client-lookup"><h3>Retrouver ma réservation</h3><label>Référence TACLAR</label><input id="lookupCode" placeholder="Ex : TAC-7824-6391"><label style="margin-top:8px">Téléphone</label><input id="lookupPhone" placeholder="Ex : 78 24 58 10"><button class="secondary" id="lookupBtn" type="button">Retrouver</button><div id="lookupMsg" class="notice hidden"></div></div><div id="toPayBox" class="list"></div><h3 style="margin-top:14px">Mes réservations payées</h3><div id="paidBox" class="list"></div></div></div>`);fillAxisSelect($('clientAxis'));const params=new URLSearchParams(location.search);const presetAxis=params.get('axis')||'';const presetDay=params.get('day')||'';const presetOffer=params.get('offer')||'';const presetSeats=Number(params.get('seats')||1);if(presetAxis&&axes.includes(presetAxis))$('clientAxis').value=presetAxis;if(presetDay)$('clientDay').value=presetDay;if(presetOffer)selectedOfferId=presetOffer;if(presetSeats>1){$('paymentMode').value='group';$('groupSeats').value=presetSeats}const resetClient=()=>{clearClientSession();renderPayments()};$('clientAxis').onchange=()=>{resetClient();renderClientOffers()};$('clientDay').onchange=()=>{resetClient();renderClientOffers()};$('clientName').oninput=resetClient;$('clientPhone').oninput=resetClient;$('paymentMode').onchange=()=>{syncGroupFields();renderClientOffers()};$('groupSeats').oninput=renderGroupNameInputs;$('lookupBtn').onclick=lookupClientReservation;syncGroupFields();renderClientOffers();renderPayments()}
 function syncGroupFields(){const group=$('paymentMode').value==='group';$('groupSeatsWrap').classList.toggle('hidden',!group);$('groupNamesWrap').classList.toggle('hidden',!group);if(group)renderGroupNameInputs()}
 function clientFocusedOfferId(){return (new URLSearchParams(location.search)).get('offer')||selectedOfferId||''}
 function maxClientReservableSeats(){
