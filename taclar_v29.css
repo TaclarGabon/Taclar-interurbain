@@ -68,8 +68,6 @@ body:not(.printing-receipt){
   box-shadow:0 18px 56px rgba(12,23,41,.18);
 }
 
-
-/* V50 - Ajouts fonctionnels uniquement : ne modifie pas l'interface principale */
-.status-payment_not_received,.status-expired{background:#fef2f2!important;border-color:#fca5a5!important}
-.payment-timer{border-left:4px solid var(--orange);font-weight:700}
-.payment-timer strong{color:#92400e}
+/* V50 - compte à rebours réservation temporaire */
+.hold-timer{border-left:4px solid var(--orange);font-weight:700}
+.status-expired,.status-payment_not_received{background:#fef2f2!important;border-color:#fca5a5!important}
